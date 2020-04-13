@@ -26,9 +26,14 @@ static double current_time(void)
    return (double) tv.tv_sec + tv.tv_usec / 1000000.0;
 }
  
-int main(void)
+int main(int argc, char *argv[])
 {
     signal(SIGINT, intHandler);
+    if(argc > 1){
+        printf("Captureing and decoding!\n");
+    }else{
+        printf("Captureing only!\n");
+    }
 	GPContext *context = gp_context_new();
 	CameraList *cameraList = NULL;
 	gp_list_new (&cameraList);
@@ -84,19 +89,36 @@ int main(void)
         while (keepRunning)
         {
             CameraFile *file = NULL;
-            gp_file_new (&file);
-            gp_camera_capture_preview (camera, file, context);
-            //gp_file_get_mime_type(file,&mime_type);
-            gp_file_get_data_and_size (file, &data, &size);
-            gp_file_free(file);
+            if( gp_file_new (&file) < 0 ){
+                printf("failed: gp_file_new\n");
+                break;
+            }
+            if( gp_camera_capture_preview (camera, file, context) < 0 ){
+                printf("failed: gp_camera_capture_preview\n");
+                break;
+            }
+            if( gp_file_get_mime_type(file,&mime_type) < 0 ){
+                printf("failed: gp_file_get_mime_type\n");
+                break;
+            }
+            if( gp_file_get_data_and_size (file, &data, &size) < 0 ){
+                printf("failed: gp_file_get_data_and_size\n");
+                break;
+            }
+            if( gp_file_free(file) < 0 ){
+                printf("failed: gp_file_free\n");
+                break;
+            }
 
-            // int jpegSubsamp, _width, _height;
-            // tjhandle _jpegDecompressor = tjInitDecompress();
-            // tjDecompressHeader2(_jpegDecompressor, (unsigned char*) data, size, &_width, &_height, &jpegSubsamp);
-            // unsigned char buffer[_width*_height*3]; //!< will contain the decompressed image
-            // tjDecompress2(_jpegDecompressor, (unsigned char*) data, size, buffer, _width, 0/*pitch*/, _height, TJPF_RGB, TJFLAG_FASTDCT);
-            // tjDestroy(_jpegDecompressor);
-            
+            if(argc > 1){
+                int jpegSubsamp, _width, _height;
+                tjhandle _jpegDecompressor = tjInitDecompress();
+                tjDecompressHeader2(_jpegDecompressor, (unsigned char*) data, size, &_width, &_height, &jpegSubsamp);
+                unsigned char buffer[_width*_height*3]; //!< will contain the decompressed image
+                tjDecompress2(_jpegDecompressor, (unsigned char*) data, size, buffer, _width, 0/*pitch*/, _height, TJPF_RGB, TJFLAG_FASTDCT);
+                tjDestroy(_jpegDecompressor);
+            }
+
             static int frames = 0;
             static double tRate0 = -1.0;
             double t = current_time();
