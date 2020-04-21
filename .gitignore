@@ -1,5 +1,4 @@
 .vscode*
 build/*
-*.png
-*.jpg
-*.jpeg
+glfw/*
+Simple-OpenGL-Image-Library/*

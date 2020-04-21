@@ -32,3 +32,6 @@ target_link_libraries(myapp SOIL)
 add_executable(camera_fps_test camera_fps_test.c)
 target_link_libraries(camera_fps_test  ${Gphoto2_LIBRARIES})
 target_link_libraries(camera_fps_test  ${TurboJPEG_LIBRARIES})
+
+add_executable(jpeg_fps_test jpeg_fps_test.c)
+target_link_libraries(jpeg_fps_test  ${TurboJPEG_LIBRARIES})
