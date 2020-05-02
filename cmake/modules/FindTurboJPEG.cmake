@@ -10,10 +10,7 @@ FIND_PATH(TurboJPEG_INCLUDE_DIRS
   PATHS
     "${DEPENDS_DIR}/libjpeg_turbo"
     "${DEPENDS_DIR}/libjpeg-turbo64"
-    "/usr/local/opt/jpeg-turbo" # homebrew
-    "/opt/local" # macports
-    "C:/libjpeg-turbo64"
-    "/opt/libjpeg-turbo"
+    "/opt/libjpeg-turbo/include"
     ENV TurboJPEG_ROOT
   PATH_SUFFIXES
     include
@@ -26,12 +23,7 @@ FIND_LIBRARY(TurboJPEG_LIBRARIES
   NAMES libturbojpeg.so.1 libturbojpeg.so.0 turbojpeg
   DOC "Found TurboJPEG library path"
   PATHS
-    "${DEPENDS_DIR}/libjpeg_turbo"
-    "${DEPENDS_DIR}/libjpeg-turbo64"
-    "/usr/local/opt/jpeg-turbo" # homebrew
-    "/opt/local" # macports
-    "C:/libjpeg-turbo64"
-    "/opt/libjpeg-turbo"
+    "/opt/libjpeg-turbo/lib32"
     ENV TurboJPEG_ROOT
   PATH_SUFFIXES
     lib
