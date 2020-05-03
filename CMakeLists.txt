@@ -20,7 +20,7 @@ find_package(TurboJPEG)
 
 include_directories(. ${Gphoto2_INCLUDE_DIRS} ${TurboJPEG_INCLUDE_DIRS})
 
-add_executable(myapp main.c glad.c capture_thread.c)
+add_executable(myapp main.c glad.c capture_thread.c decode_thread.c render_thread.c)
 target_link_libraries(myapp  ${Gphoto2_LIBRARIES})
 target_link_libraries(myapp  ${TurboJPEG_LIBRARIES})
 target_link_libraries(myapp glfw)
