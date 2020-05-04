@@ -28,15 +28,11 @@ int main(int argc, char *argv[])
     int status = 0;
     int c = 0;
     while(capture_pid && render_pid){
-        if(c++ > 15){
-            kill(capture_pid,SIGINT);
-        }
         sleep(1);
-
         // check if a proccess has died.
         pid_t pid = waitpid(-1,&status,WNOHANG);
         if(pid == capture_pid) capture_pid = 0; 
-        //if(pid == render_pid) render_pid = 0; 
+        if(pid == render_pid) render_pid = 0; 
     }
     printf("\033[0mKilling all threads\n");
     //kill other threads

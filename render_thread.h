@@ -8,7 +8,7 @@
 // #include <sys/types.h>
 // #include <sys/wait.h>
 // #include <sys/mman.h>
- #include <signal.h>
+#include <signal.h>
 // #include <time.h>
 // #include <stdio.h>
 // #include <stdlib.h>

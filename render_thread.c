@@ -187,7 +187,8 @@ void run_render_thread(jpeg_buffer_t *shared_buffer, GLFWwindow **window, GLuint
             glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             glfwSwapBuffers(*window);
-            shared_buffer[0].state == capture;
+            shared_buffer[0].state = capture;
+            printf("%sRendering image\n",PR);
         }
         glfwPollEvents();
     }
