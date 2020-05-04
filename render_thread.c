@@ -1,5 +1,34 @@
 #include "render_thread.h"
 
+#include <turbojpeg.h>
+
+static unsigned long readJpg(char *name, char **data){
+    FILE *file;
+	unsigned long size;
+    file = fopen(name, "rb");
+    if (!file)
+    {
+        fprintf(stderr, "Unable to open file %s", name);
+        return 1;
+    }
+    
+    //Get file length
+    fseek(file, 0, SEEK_END);
+    size=ftell(file);
+    fseek(file, 0, SEEK_SET);
+    //Allocate memory
+    *data=(char *)malloc(size+1);
+    if (!*data)
+    {
+        fprintf(stderr, "Memory error!");
+        fclose(file);
+        return 1;
+    }
+    fread(*data, size, 1, file);
+    fclose(file);
+    return size;
+}
+ 
 static int renderRunning;
 
 static const struct
@@ -149,6 +178,11 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    // int width, height;
+    // unsigned char* image;
+    // char* jpeg;
+    // unsigned long size;
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textures[1]);
         // size = readJpg("capture_preview.jpg",&jpeg);
@@ -178,17 +212,43 @@ void run_render_thread(jpeg_buffer_t *shared_buffer, GLFWwindow **window, GLuint
 {
     while (!glfwWindowShouldClose(*window) && renderRunning)
     {
+        sem_wait(&shared_buffer[0].sem_render);
         if(shared_buffer[0].state == render){
             int width, height;
             glfwGetFramebufferSize(*window, &width, &height);
             glViewport(0, 0, width, height);
             glClear(GL_COLOR_BUFFER_BIT);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, shared_buffer[0].uncompressed_data);
+
+            // unsigned char* image;
+            // char* jpeg;
+            // unsigned long size;
+            // shared_buffer[0].size = readJpg("capture_preview.jpg",&jpeg);
+            // int jpegSubsamp;
+            // tjhandle _jpegDecompressor = tjInitDecompress();
+            // tjDecompressHeader2(_jpegDecompressor, 
+            //                     (unsigned char*) jpeg,
+            //                     shared_buffer[0].size, 
+            //                     &shared_buffer[0].width, 
+            //                     &shared_buffer[0].height, 
+            //                     &jpegSubsamp);         
+            // tjDecompress2(  _jpegDecompressor, 
+            //                 (unsigned char*) jpeg, 
+            //                 shared_buffer[0].size, 
+            //                 shared_buffer[0].uncompressed_data,
+            //                 shared_buffer[0].width, 
+            //                 0,
+            //                 shared_buffer[0].height, 
+            //                 TJPF_RGB, TJFLAG_FASTDCT);
+            //                 shared_buffer[0].state = render;
+            // tjDestroy(_jpegDecompressor);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shared_buffer[0].width, 
+                        shared_buffer[0].height, 0, GL_RGB, GL_UNSIGNED_BYTE, 
+                        shared_buffer[0].uncompressed_data);
+
             glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             glfwSwapBuffers(*window);
             shared_buffer[0].state = capture;
-            printf("%sRendering image\n",PR);
         }
         glfwPollEvents();
     }

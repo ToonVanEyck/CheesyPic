@@ -1,3 +1,5 @@
+#include <semaphore.h> 
+
 #ifndef SHARED_MEMORY_H
 #define SHARED_MEMORY_H
 
@@ -20,6 +22,8 @@ typedef struct{
     unsigned int height;
     unsigned char uncompressed_data[PREVIEW_WIDTH * PREVIEW_HEIGHT * 3];
     previeuw_state_t state;
+    sem_t sem_decode;
+    sem_t sem_render;
 }jpeg_buffer_t;
 
 #endif

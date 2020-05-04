@@ -27,9 +27,9 @@
 
 #define PC "\033[0;36m"
 
-#define FRAME_RATE 25
+#define FRAME_RATE 8
 #define FRAME_PERIOD (1000000000/FRAME_RATE)
-#define SLOWDOWN 1
+#define SLOWDOWN 0
 
 void start_capture_thread(jpeg_buffer_t *shared_buffer);
 void stop_capture_thread(int dummy);

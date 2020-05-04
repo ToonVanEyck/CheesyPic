@@ -25,6 +25,7 @@ int init_decode_thread()
 void run_decode_thread(jpeg_buffer_t *shared_buffer)
 {
     while(decodeRunning){ 
+        sem_wait(&shared_buffer[0].sem_decode);
         if(shared_buffer[0].state == decode){ // wait for buffer to fill
             int jpegSubsamp;
             tjhandle _jpegDecompressor = tjInitDecompress();
@@ -34,7 +35,7 @@ void run_decode_thread(jpeg_buffer_t *shared_buffer)
                                 &shared_buffer[0].width, 
                                 &shared_buffer[0].height, 
                                 &jpegSubsamp);
-            printf("%ssize %dx%d\n",PD,shared_buffer[0].width,shared_buffer[0].height);
+            //printf("%ssize %dx%d\n",PD,shared_buffer[0].width,shared_buffer[0].height);
             if(shared_buffer[0].width * shared_buffer[0].height <= PREVIEW_WIDTH * PREVIEW_HEIGHT){               
                 tjDecompress2(  _jpegDecompressor, 
                                 (unsigned char*)shared_buffer[0].compressed_data, 
@@ -45,12 +46,13 @@ void run_decode_thread(jpeg_buffer_t *shared_buffer)
                                 shared_buffer[0].height, 
                                 TJPF_RGB, TJFLAG_FASTDCT);
                                 shared_buffer[0].state = render;
-                                printf("%sDecode complete\n",PD);
+                                //printf("%sDecode complete\n",PD);
             }else{
                 printf("%sERROR image to large\n",PD);
                 decodeRunning = 0;
             }
             tjDestroy(_jpegDecompressor);
         }
+        sem_post(&shared_buffer[0].sem_render);
     }
 }

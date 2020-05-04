@@ -13,6 +13,9 @@ int main(int argc, char *argv[])
     // setup ipc
     // Our memory buffer will be readable and writable:
     void *shmem = mmap(NULL, sizeof(jpeg_buffer_t)*NUM_SHARED_BUFFERS, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    // init semaphores
+    sem_init(&((jpeg_buffer_t*)shmem)[0].sem_decode,0,0);
+    sem_init(&((jpeg_buffer_t*)shmem)[0].sem_render,1,0);
     // start threads
     pid_t capture_pid = fork();
     if(!capture_pid){
@@ -43,5 +46,9 @@ int main(int argc, char *argv[])
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
     }
+    //destroy semaphores
+    sem_destroy(&((jpeg_buffer_t*)shmem)[0].sem_decode);
+    sem_destroy(&((jpeg_buffer_t*)shmem)[0].sem_render);
+
     exit(0);
 }

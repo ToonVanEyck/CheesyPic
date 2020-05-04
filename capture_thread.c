@@ -57,7 +57,7 @@ int init_timer(struct pollfd *fds, int *numfd)
 {
     struct itimerspec timerValue;
     timerValue.it_value.tv_sec = 0;
-    timerValue.it_value.tv_nsec = FRAME_PERIOD;
+    timerValue.it_value.tv_nsec = 500000000;
     timerValue.it_interval.tv_sec = SLOWDOWN;
     timerValue.it_interval.tv_nsec = FRAME_PERIOD; 
 
@@ -150,6 +150,12 @@ int init_camera(GPContext **ctx, Camera **camera)
         gp_list_free(cameraList);
 		gp_abilities_list_free (al);
 		gp_port_info_list_free (il);
+
+        CameraFile *cf;
+        gp_file_new(&cf);
+        gp_camera_capture_preview (*camera, cf, *ctx);
+        gp_file_free(cf);
+        
         return 0;
     }
 }
@@ -175,7 +181,7 @@ static void print_fps(void)
 }
 
 
-void run_capture_thread(jpeg_buffer_t *shared_buffer ,struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera)
+void run_capture_thread(jpeg_buffer_t *shared_buffer, struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera)
 {
     while(captureRunning){
         poll(fds,*numfd,-1);
@@ -184,11 +190,10 @@ void run_capture_thread(jpeg_buffer_t *shared_buffer ,struct pollfd *fds, int *n
             read(fds[FDS_TIMER].fd, &value,8);  
             // clear previous frame
             if(shared_buffer[0].state != decode && shared_buffer[0].cameraFile){
-                printf("%sFreeing camerafile\n",PC);
                 gp_file_free((CameraFile *)shared_buffer[0].cameraFile); // only free after decode!
                 shared_buffer[0].cameraFile = NULL;
             }
-            // get new frame
+            // // get new frame
             if(shared_buffer[0].state == capture){
                 const char *data;
                 const char *mime_type;
@@ -197,7 +202,11 @@ void run_capture_thread(jpeg_buffer_t *shared_buffer ,struct pollfd *fds, int *n
                 gp_camera_capture_preview (*camera, (CameraFile *)shared_buffer[0].cameraFile, *ctx);
                 gp_file_get_data_and_size ((CameraFile *)shared_buffer[0].cameraFile, &(shared_buffer[0].compressed_data),&(shared_buffer[0].size));
                 shared_buffer[0].state = decode;
-                printf("%sCampture complete\n",PC);
+                sem_post(&shared_buffer[0].sem_decode);
+                //printf("%sCampture complete\n",PC);
+            }else{
+                printf("%s---------------- ERROR NO FREE BUFFER ----------------------\n",PC);
+            //     captureRunning = 0;
             }
             print_fps();
         }
