@@ -6,7 +6,7 @@
 
 static int captureRunning;
 
-void start_capture_thread(jpeg_buffer_t *shared_buffer)
+void start_capture_thread(shared_memory_t *shared_memory)
 {
     printf("%sStarted capture thread!\n",PC);
     signal(SIGINT, stop_capture_thread);
@@ -17,19 +17,19 @@ void start_capture_thread(jpeg_buffer_t *shared_buffer)
     pthread_t decoder_thread;
 
     if(init_capture_thread(fds, &numfd, &ctx, &camera)){
+        printf("%sFinished capture thread!\n",PC);
         // exit 
         exit(1);
     }else{
         captureRunning = 1;
-        if(pthread_create(&decoder_thread, NULL, start_decode_thread, shared_buffer)) {
+        if(pthread_create(&decoder_thread, NULL, start_decode_thread, shared_memory)) {
             fprintf(stderr, "Error creating decode thread\n");
             captureRunning = 0;
         }
-        run_capture_thread(shared_buffer, fds, &numfd, &ctx, &camera);
-        gp_camera_exit(camera,ctx);
-        //gp_context_unref(ctx);
-        stop_decode_thread();
+        run_capture_thread(shared_memory, fds, &numfd, &ctx, &camera);
+        sem_post(&shared_memory->sem_decode);
         pthread_join(decoder_thread,NULL);
+        clean_capture_thread(fds, &numfd, &ctx, &camera);
     }
     printf("%sFinished capture thread!\n",PC);
 }
@@ -37,6 +37,7 @@ void start_capture_thread(jpeg_buffer_t *shared_buffer)
 void stop_capture_thread(int dummy)
 {
     captureRunning = 0;
+    stop_decode_thread();
 }
 
 
@@ -51,6 +52,13 @@ int init_capture_thread(struct pollfd *fds, int *numfd,GPContext **ctx, Camera *
 
     if (init_timer(fds,numfd)) return 1;
    // if (init_signal(fds,numfd)) return 1;
+}
+
+void clean_capture_thread(struct pollfd *fds, int *numfd,GPContext **ctx, Camera **camera)
+{
+        gp_camera_exit(*camera,*ctx);
+        gp_context_unref(*ctx);
+        close(fds[FDS_TIMER].fd);
 }
 
 int init_timer(struct pollfd *fds, int *numfd)
@@ -181,34 +189,36 @@ static void print_fps(void)
 }
 
 
-void run_capture_thread(jpeg_buffer_t *shared_buffer, struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera)
+void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera)
 {
     while(captureRunning){
         poll(fds,*numfd,-1);
         if(fds[FDS_TIMER].revents & POLLIN){
             uint64_t value;
             read(fds[FDS_TIMER].fd, &value,8);  
-            // clear previous frame
-            if(shared_buffer[0].state != decode && shared_buffer[0].cameraFile){
-                gp_file_free((CameraFile *)shared_buffer[0].cameraFile); // only free after decode!
-                shared_buffer[0].cameraFile = NULL;
+            for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
+                // clear previous frame
+                if(shared_memory->buffer[i].state != decode && shared_memory->buffer[i].cameraFile){
+                    gp_file_free((CameraFile *)shared_memory->buffer[i].cameraFile); // only free after decode!
+                    shared_memory->buffer[i].cameraFile = NULL;
+                }
+                // // get new frame
+                if(shared_memory->buffer[i].state == capture){
+                    int rc[3];
+                    rc[0] = gp_file_new ((CameraFile **)&shared_memory->buffer[i].cameraFile);
+                    rc[1] = gp_camera_capture_preview (*camera, (CameraFile *)shared_memory->buffer[i].cameraFile, *ctx);
+                    rc[2] = gp_file_get_data_and_size ((CameraFile *)shared_memory->buffer[i].cameraFile, &(shared_memory->buffer[i].compressed_data),&(shared_memory->buffer[i].size));
+                    printf("%s[%d] [%d] [%d]",PC,rc[0],rc[1],rc[2]);
+                    shared_memory->buffer[i].state = decode;
+                    sem_post(&shared_memory->sem_decode);
+                    //printf("%s%d Campture complete\n",PC,i);
+                    print_fps();
+                    break;
+                }else{
+                    //printf("%s---------------- ERROR BUFFER %d NOT FREE ----------------------\n",PC,i);
+                //     captureRunning = 0;
+                }
             }
-            // // get new frame
-            if(shared_buffer[0].state == capture){
-                const char *data;
-                const char *mime_type;
-                unsigned long size;
-                gp_file_new ((CameraFile **)&shared_buffer[0].cameraFile);
-                gp_camera_capture_preview (*camera, (CameraFile *)shared_buffer[0].cameraFile, *ctx);
-                gp_file_get_data_and_size ((CameraFile *)shared_buffer[0].cameraFile, &(shared_buffer[0].compressed_data),&(shared_buffer[0].size));
-                shared_buffer[0].state = decode;
-                sem_post(&shared_buffer[0].sem_decode);
-                //printf("%sCampture complete\n",PC);
-            }else{
-                printf("%s---------------- ERROR NO FREE BUFFER ----------------------\n",PC);
-            //     captureRunning = 0;
-            }
-            print_fps();
         }
     }
 }

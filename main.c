@@ -12,22 +12,25 @@ int main(int argc, char *argv[])
 
     // setup ipc
     // Our memory buffer will be readable and writable:
-    void *shmem = mmap(NULL, sizeof(jpeg_buffer_t)*NUM_SHARED_BUFFERS, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    printf("allocating %ld bytes of shared memory.\n",sizeof(shared_memory_t));
+    shared_memory_t *shared_memory = mmap(NULL, sizeof(shared_memory_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     // init semaphores
-    sem_init(&((jpeg_buffer_t*)shmem)[0].sem_decode,0,0);
-    sem_init(&((jpeg_buffer_t*)shmem)[0].sem_render,1,0);
+    sem_init(&shared_memory->sem_decode,0,0);
+    sem_init(&shared_memory->sem_render,1,0);
     // start threads
     pid_t capture_pid = fork();
+    printf("capture_pid %d -- %d\n",capture_pid,getpid());
     if(!capture_pid){
-        start_capture_thread(shmem);
-        return 0;
+        start_capture_thread(shared_memory);
+        exit(0);
     }
     pid_t render_pid = fork();
+    printf("render_pid %d -- %d\n",render_pid,getpid());
     if(!render_pid){
-        start_render_thread(shmem);
+        start_render_thread(shared_memory);
         return 0;
     }
-    // wait for thread to finish
+    //wait for thread to finish
     int status = 0;
     int c = 0;
     while(capture_pid && render_pid){
@@ -37,18 +40,21 @@ int main(int argc, char *argv[])
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
     }
+    sleep(1);
     printf("\033[0mKilling all threads\n");
     //kill other threads
     if(capture_pid)kill(capture_pid,SIGINT);
     if(render_pid)kill(render_pid,SIGINT);
     while(capture_pid || render_pid){
+        sleep(1);
+        if(render_pid) sem_post(&shared_memory->sem_render);
         pid_t pid = waitpid(-1,&status,WNOHANG);
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
     }
     //destroy semaphores
-    sem_destroy(&((jpeg_buffer_t*)shmem)[0].sem_decode);
-    sem_destroy(&((jpeg_buffer_t*)shmem)[0].sem_render);
+    sem_destroy(&shared_memory->sem_decode);
+    sem_destroy(&shared_memory->sem_render);
 
     exit(0);
 }

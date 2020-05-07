@@ -27,17 +27,18 @@
 
 #define PC "\033[0;36m"
 
-#define FRAME_RATE 8
+#define FRAME_RATE 25
 #define FRAME_PERIOD (1000000000/FRAME_RATE)
 #define SLOWDOWN 0
 
-void start_capture_thread(jpeg_buffer_t *shared_buffer);
+void start_capture_thread(shared_memory_t *shared_memory);
 void stop_capture_thread(int dummy);
 
 int init_capture_thread(struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera);
+void clean_capture_thread(struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera);
 int init_timer(struct pollfd *fds, int *numfd);
 int init_signal(struct pollfd *fds, int *numfd);
 int init_camera(GPContext **ctx, Camera **camera);
-void run_capture_thread(jpeg_buffer_t *shared_buffer, struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera);
+void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera);
 
 #endif

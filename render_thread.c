@@ -81,7 +81,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-void start_render_thread(jpeg_buffer_t *shared_buffer)
+void start_render_thread(shared_memory_t *shared_memory)
 {
     printf("%sStarted render thread!\n",PR);
     signal(SIGINT, stop_render_thread);
@@ -90,7 +90,7 @@ void start_render_thread(jpeg_buffer_t *shared_buffer)
     GLFWwindow* window;
     init_render_thread(&window,textures,&program,&fragment_shader,&vertex_shader,&ebo, &vbo);
     renderRunning = 1;
-    run_render_thread(shared_buffer, &window,program);
+    run_render_thread(shared_memory, &window,program);
     cleanup_render_thread(&window,textures,&program,&fragment_shader,&vertex_shader,&ebo, &vbo);
     printf("%sFinished render thread!\n",PR);
 }
@@ -208,47 +208,52 @@ void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program
     glfwTerminate();
 }
 
-void run_render_thread(jpeg_buffer_t *shared_buffer, GLFWwindow **window, GLuint program)
+void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program)
 {
+    const struct timespec sem_timespec = {0,100000};
     while (!glfwWindowShouldClose(*window) && renderRunning)
     {
-        sem_wait(&shared_buffer[0].sem_render);
-        if(shared_buffer[0].state == render){
-            int width, height;
-            glfwGetFramebufferSize(*window, &width, &height);
-            glViewport(0, 0, width, height);
-            glClear(GL_COLOR_BUFFER_BIT);
+        if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
+            for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
+                if(shared_memory->buffer[i].state == render){
+                    int width, height;
+                    glfwGetFramebufferSize(*window, &width, &height);
+                    glViewport(0, 0, width, height);
+                    glClear(GL_COLOR_BUFFER_BIT);
 
-            // unsigned char* image;
-            // char* jpeg;
-            // unsigned long size;
-            // shared_buffer[0].size = readJpg("capture_preview.jpg",&jpeg);
-            // int jpegSubsamp;
-            // tjhandle _jpegDecompressor = tjInitDecompress();
-            // tjDecompressHeader2(_jpegDecompressor, 
-            //                     (unsigned char*) jpeg,
-            //                     shared_buffer[0].size, 
-            //                     &shared_buffer[0].width, 
-            //                     &shared_buffer[0].height, 
-            //                     &jpegSubsamp);         
-            // tjDecompress2(  _jpegDecompressor, 
-            //                 (unsigned char*) jpeg, 
-            //                 shared_buffer[0].size, 
-            //                 shared_buffer[0].uncompressed_data,
-            //                 shared_buffer[0].width, 
-            //                 0,
-            //                 shared_buffer[0].height, 
-            //                 TJPF_RGB, TJFLAG_FASTDCT);
-            //                 shared_buffer[0].state = render;
-            // tjDestroy(_jpegDecompressor);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shared_buffer[0].width, 
-                        shared_buffer[0].height, 0, GL_RGB, GL_UNSIGNED_BYTE, 
-                        shared_buffer[0].uncompressed_data);
+                    // unsigned char* image;
+                    // char* jpeg;
+                    // unsigned long size;
+                    // shared_memory->buffer[i].size = readJpg("capture_preview.jpg",&jpeg);
+                    // int jpegSubsamp;
+                    // tjhandle _jpegDecompressor = tjInitDecompress();
+                    // tjDecompressHeader2(_jpegDecompressor, 
+                    //                     (unsigned char*) jpeg,
+                    //                     shared_memory->buffer[i].size, 
+                    //                     &shared_memory->buffer[i].width, 
+                    //                     &shared_memory->buffer[i].height, 
+                    //                     &jpegSubsamp);         
+                    // tjDecompress2(  _jpegDecompressor, 
+                    //                 (unsigned char*) jpeg, 
+                    //                 shared_memory->buffer[i].size, 
+                    //                 shared_memory->buffer[i].uncompressed_data,
+                    //                 shared_memory->buffer[i].width, 
+                    //                 0,
+                    //                 shared_memory->buffer[i].height, 
+                    //                 TJPF_RGB, TJFLAG_FASTDCT);
+                    //                 shared_memory->buffer[i].state = render;
+                    // tjDestroy(_jpegDecompressor);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shared_memory->buffer[i].width, 
+                                shared_memory->buffer[i].height, 0, GL_RGB, GL_UNSIGNED_BYTE, 
+                                shared_memory->buffer[i].uncompressed_data);
 
-            glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-            glfwSwapBuffers(*window);
-            shared_buffer[0].state = capture;
+                    glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                    glfwSwapBuffers(*window);
+                    shared_memory->buffer[i].state = capture;
+                    break;
+                }
+            }
         }
         glfwPollEvents();
     }

@@ -9,7 +9,7 @@
 // #include <sys/wait.h>
 // #include <sys/mman.h>
 #include <signal.h>
-// #include <time.h>
+#include <time.h>
 // #include <stdio.h>
 // #include <stdlib.h>
 // #include <string.h>
@@ -24,11 +24,11 @@
 
 #define PR "\033[0;35m"
 
-void start_render_thread(jpeg_buffer_t *shared_buffer);
+void start_render_thread(shared_memory_t *shared_memory);
 void stop_render_thread(int dummy);
 
 int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
 void cleanup_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
-void run_render_thread(jpeg_buffer_t *shared_buffer, GLFWwindow **window, GLuint program);
+void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program);
 
 #endif

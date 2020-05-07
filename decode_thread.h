@@ -21,10 +21,10 @@
 
 #define PD "\033[0;34m"
 
-void *start_decode_thread(void *shared_buffer);
+void *start_decode_thread(void *shared_memory);
 void stop_decode_thread();
 
 int init_decode_thread();
-void run_decode_thread(jpeg_buffer_t *shared_buffer);
+void run_decode_thread(shared_memory_t *shared_memory);
 
 #endif
