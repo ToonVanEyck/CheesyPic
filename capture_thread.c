@@ -198,24 +198,25 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
             read(fds[FDS_TIMER].fd, &value,8);  
             for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
                 // clear previous frame
-                if(shared_memory->buffer[i].state != decode && shared_memory->buffer[i].cameraFile){
-                    gp_file_free((CameraFile *)shared_memory->buffer[i].cameraFile); // only free after decode!
-                    shared_memory->buffer[i].cameraFile = NULL;
+                if(shared_memory->preview_buffer[i].pre_state != pre_decode && shared_memory->preview_buffer[i].cameraFile){
+                    gp_file_free((CameraFile *)shared_memory->preview_buffer[i].cameraFile); // only free after decode!
+                    shared_memory->preview_buffer[i].cameraFile = NULL;
                 }
                 // // get new frame
-                if(shared_memory->buffer[i].state == capture){
+                if(shared_memory->preview_buffer[i].pre_state == pre_capture){
                     int rc[3];
-                    rc[0] = gp_file_new ((CameraFile **)&shared_memory->buffer[i].cameraFile);
-                    rc[1] = gp_camera_capture_preview (*camera, (CameraFile *)shared_memory->buffer[i].cameraFile, *ctx);
-                    rc[2] = gp_file_get_data_and_size ((CameraFile *)shared_memory->buffer[i].cameraFile, &(shared_memory->buffer[i].compressed_data),&(shared_memory->buffer[i].size));
-                    printf("%s[%d] [%d] [%d]",PC,rc[0],rc[1],rc[2]);
-                    shared_memory->buffer[i].state = decode;
+                    rc[0] = gp_file_new ((CameraFile **)&shared_memory->preview_buffer[i].cameraFile);
+                    rc[1] = gp_camera_capture_preview (*camera, (CameraFile *)shared_memory->preview_buffer[i].cameraFile, *ctx);
+                    rc[2] = gp_file_get_data_and_size ((CameraFile *)shared_memory->preview_buffer[i].cameraFile, &(shared_memory->preview_buffer[i].jpeg_data),&(shared_memory->preview_buffer[i].size));
+                    if(rc[0]||rc[0]||rc[0]){
+                        printf("%s[%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2]);
+                    }
+                    shared_memory->preview_buffer[i].pre_state = pre_decode;
                     sem_post(&shared_memory->sem_decode);
                     //printf("%s%d Campture complete\n",PC,i);
                     print_fps();
                     break;
                 }else{
-                    //printf("%s---------------- ERROR BUFFER %d NOT FREE ----------------------\n",PC,i);
                 //     captureRunning = 0;
                 }
             }

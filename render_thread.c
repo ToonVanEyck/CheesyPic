@@ -215,7 +215,7 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
     {
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
             for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
-                if(shared_memory->buffer[i].state == render){
+                if(shared_memory->preview_buffer[i].pre_state == pre_render){
                     int width, height;
                     glfwGetFramebufferSize(*window, &width, &height);
                     glViewport(0, 0, width, height);
@@ -224,33 +224,33 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                     // unsigned char* image;
                     // char* jpeg;
                     // unsigned long size;
-                    // shared_memory->buffer[i].size = readJpg("capture_preview.jpg",&jpeg);
+                    // shared_memory->preview_buffer[i].size = readJpg("capture_preview.jpg",&jpeg);
                     // int jpegSubsamp;
                     // tjhandle _jpegDecompressor = tjInitDecompress();
                     // tjDecompressHeader2(_jpegDecompressor, 
                     //                     (unsigned char*) jpeg,
-                    //                     shared_memory->buffer[i].size, 
-                    //                     &shared_memory->buffer[i].width, 
-                    //                     &shared_memory->buffer[i].height, 
+                    //                     shared_memory->preview_buffer[i].size, 
+                    //                     &shared_memory->preview_buffer[i].width, 
+                    //                     &shared_memory->preview_buffer[i].height, 
                     //                     &jpegSubsamp);         
                     // tjDecompress2(  _jpegDecompressor, 
                     //                 (unsigned char*) jpeg, 
-                    //                 shared_memory->buffer[i].size, 
-                    //                 shared_memory->buffer[i].uncompressed_data,
-                    //                 shared_memory->buffer[i].width, 
+                    //                 shared_memory->preview_buffer[i].size, 
+                    //                 shared_memory->preview_buffer[i].raw_data,
+                    //                 shared_memory->preview_buffer[i].width, 
                     //                 0,
-                    //                 shared_memory->buffer[i].height, 
+                    //                 shared_memory->preview_buffer[i].height, 
                     //                 TJPF_RGB, TJFLAG_FASTDCT);
-                    //                 shared_memory->buffer[i].state = render;
+                    //                 shared_memory->preview_buffer[i].pre_state = pre_render;
                     // tjDestroy(_jpegDecompressor);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shared_memory->buffer[i].width, 
-                                shared_memory->buffer[i].height, 0, GL_RGB, GL_UNSIGNED_BYTE, 
-                                shared_memory->buffer[i].uncompressed_data);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shared_memory->preview_buffer[i].width, 
+                                shared_memory->preview_buffer[i].height, 0, GL_RGB, GL_UNSIGNED_BYTE, 
+                                shared_memory->preview_buffer[i].raw_data);
 
                     glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
                     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                     glfwSwapBuffers(*window);
-                    shared_memory->buffer[i].state = capture;
+                    shared_memory->preview_buffer[i].pre_state = pre_capture;
                     break;
                 }
             }
