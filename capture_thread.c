@@ -43,7 +43,9 @@ void stop_capture_thread(int dummy)
 
 int init_capture_thread(struct pollfd *fds, int *numfd,GPContext **ctx, Camera **camera)
 {
-     if (init_camera(ctx,camera)) return 1;
+    #ifndef NO_CAM
+        if (init_camera(ctx,camera)) return 1;
+    #endif 
 
     memset(fds, 0 , sizeof(fds)); 
     for(int i = 0; i<FDS_MAX ; i++){
@@ -56,9 +58,11 @@ int init_capture_thread(struct pollfd *fds, int *numfd,GPContext **ctx, Camera *
 
 void clean_capture_thread(struct pollfd *fds, int *numfd,GPContext **ctx, Camera **camera)
 {
+    #ifndef NO_CAM
         gp_camera_exit(*camera,*ctx);
         gp_context_unref(*ctx);
-        close(fds[FDS_TIMER].fd);
+    #endif
+    close(fds[FDS_TIMER].fd);
 }
 
 int init_timer(struct pollfd *fds, int *numfd)
@@ -199,21 +203,34 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
             for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
                 // clear previous frame
                 if(shared_memory->preview_buffer[i].pre_state != pre_decode && shared_memory->preview_buffer[i].cameraFile){
-                    gp_file_free((CameraFile *)shared_memory->preview_buffer[i].cameraFile); // only free after decode!
+                    #ifndef NO_CAM
+                        gp_file_free((CameraFile *)shared_memory->preview_buffer[i].cameraFile); // only free after decode!
+                    #endif
                     shared_memory->preview_buffer[i].cameraFile = NULL;
                 }
                 // // get new frame
-                if(shared_memory->preview_buffer[i].pre_state == pre_capture){
-                    int rc[3];
-                    rc[0] = gp_file_new ((CameraFile **)&shared_memory->preview_buffer[i].cameraFile);
-                    rc[1] = gp_camera_capture_preview (*camera, (CameraFile *)shared_memory->preview_buffer[i].cameraFile, *ctx);
-                    rc[2] = gp_file_get_data_and_size ((CameraFile *)shared_memory->preview_buffer[i].cameraFile, &(shared_memory->preview_buffer[i].jpeg_data),&(shared_memory->preview_buffer[i].size));
-                    if(rc[0]||rc[0]||rc[0]){
-                        printf("%s[%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2]);
+                #ifdef NO_CAM
+                    static unsigned char prev_buffer=0;
+                    if(prev_buffer == i){
+                        continue;
+                    }else{
+                        prev_buffer = i;
                     }
+                #endif
+
+                if(shared_memory->preview_buffer[i].pre_state == pre_capture){
+                    #ifndef NO_CAM
+                        int rc[3];
+                        rc[0] = gp_file_new ((CameraFile **)&shared_memory->preview_buffer[i].cameraFile);
+                        rc[1] = gp_camera_capture_preview (*camera, (CameraFile *)shared_memory->preview_buffer[i].cameraFile, *ctx);
+                        rc[2] = gp_file_get_data_and_size ((CameraFile *)shared_memory->preview_buffer[i].cameraFile, &(shared_memory->preview_buffer[i].jpeg_data),&(shared_memory->preview_buffer[i].size));
+                        if(rc[0]||rc[0]||rc[0]){
+                            printf("%s[%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2]);
+                        }
+                    #endif
                     shared_memory->preview_buffer[i].pre_state = pre_decode;
                     sem_post(&shared_memory->sem_decode);
-                    //printf("%s%d Campture complete\n",PC,i);
+                    //printf("%s%d Capture complete\n",PC,i);
                     print_fps();
                     break;
                 }else{

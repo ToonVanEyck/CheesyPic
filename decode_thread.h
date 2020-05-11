@@ -24,7 +24,7 @@
 void *start_decode_thread(void *shared_memory);
 void stop_decode_thread();
 
-int init_decode_thread();
+int init_decode_thread(preview_buffer_t preview_buffer[]);
 void run_decode_thread(shared_memory_t *shared_memory);
 
 #endif

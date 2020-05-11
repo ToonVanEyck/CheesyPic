@@ -1,7 +1,5 @@
 #include "render_thread.h"
 
-#include <turbojpeg.h>
-
 static unsigned long readJpg(char *name, char **data){
     FILE *file;
 	unsigned long size;
@@ -49,11 +47,12 @@ static const char* vertex_shader_text =
 "in vec3 vCol;\n"
 "in vec2 vPos;\n"
 "in vec2 texcoord;\n"
+"uniform  mat4 resize;\n"
 "out vec3 color;\n"
 "out vec2 Texcoord;\n"
 "void main()\n"
 "{\n"
-"    gl_Position = vec4(vPos, 0.0, 1.0);\n"
+"    gl_Position = resize * vec4(vPos, 0.0, 1.0);\n"
 "    Texcoord = texcoord;\n"
 "    color = vCol;\n"
 "}\n";
@@ -75,10 +74,15 @@ static void error_callback(int error, const char* description)
     fprintf(stdout, "Error: %s\n", description);
 }
  
+static char button_pushed;
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+    if (key == GLFW_KEY_C && action == GLFW_PRESS)
+        button_pushed = 1;
 }
 
 void start_render_thread(shared_memory_t *shared_memory)
@@ -86,12 +90,12 @@ void start_render_thread(shared_memory_t *shared_memory)
     printf("%sStarted render thread!\n",PR);
     signal(SIGINT, stop_render_thread);
     GLuint textures[NUM_TEXTURES];
-    GLuint program, fragment_shader, vertex_shader, ebo, vbo;
+    GLuint program, resize_mat, fragment_shader, vertex_shader, ebo, vbo;
     GLFWwindow* window;
-    init_render_thread(&window,textures,&program,&fragment_shader,&vertex_shader,&ebo, &vbo);
+    init_render_thread(&window,textures,&program, &resize_mat,&fragment_shader,&vertex_shader,&ebo, &vbo);
     renderRunning = 1;
-    run_render_thread(shared_memory, &window,program);
-    cleanup_render_thread(&window,textures,&program,&fragment_shader,&vertex_shader,&ebo, &vbo);
+    run_render_thread(shared_memory, &window,program, resize_mat);
+    cleanup_render_thread(&window,textures,&program, &resize_mat,&fragment_shader,&vertex_shader,&ebo, &vbo);
     printf("%sFinished render thread!\n",PR);
 }
 void stop_render_thread(int dummy)
@@ -99,7 +103,7 @@ void stop_render_thread(int dummy)
     renderRunning = 0;
 }
 
-int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
+int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat , GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
 {
     GLint vpos_location, vcol_location;
 
@@ -111,7 +115,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
-    *window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+    *window = glfwCreateWindow(600, 400, "Simple example", NULL/*glfwGetPrimaryMonitor()*/, NULL);
     if (!*window)
     {
         glfwTerminate();
@@ -152,6 +156,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glBindFragDataLocation(*program, 0, "outColor");
     glLinkProgram(*program);
 
+    *resize_mat = glGetUniformLocation(*program, "resize");
     vpos_location = glGetAttribLocation(*program, "vPos");
     vcol_location = glGetAttribLocation(*program, "vCol");
     GLint texAttrib = glGetAttribLocation(*program, "texcoord");
@@ -196,7 +201,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program,GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
+void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program ,GLuint *resize_mat ,GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
 {
     glDeleteTextures(NUM_TEXTURES, textures);
     glDeleteProgram(*program);
@@ -208,46 +213,33 @@ void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program
     glfwTerminate();
 }
 
-void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program)
+void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat)
 {
     const struct timespec sem_timespec = {0,100000};
+    mat4x4 m, p, mvp;
     while (!glfwWindowShouldClose(*window) && renderRunning)
     {
+        if(shared_memory->logic_state == log_idle && button_pushed)shared_memory->logic_state = log_triggred; 
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
             for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
                 if(shared_memory->preview_buffer[i].pre_state == pre_render){
                     int width, height;
                     glfwGetFramebufferSize(*window, &width, &height);
+
+                    //setup transformation matrix so previeuw is always shown in correct aspect ratio
+                    mat4x4_identity(m);
+                    float square_hight = (float)PREVIEW_WIDTH / (float)PREVIEW_HEIGHT * (float)height;
+                    m[0][0] = (square_hight < width)?((float)PREVIEW_WIDTH*(float)height)/((float)PREVIEW_HEIGHT*(float)width):1.0;
+                    m[1][1] = (square_hight >= width)?((float)PREVIEW_HEIGHT*(float)width)/((float)PREVIEW_WIDTH*(float)height):1.0;
+
                     glViewport(0, 0, width, height);
                     glClear(GL_COLOR_BUFFER_BIT);
-
-                    // unsigned char* image;
-                    // char* jpeg;
-                    // unsigned long size;
-                    // shared_memory->preview_buffer[i].size = readJpg("capture_preview.jpg",&jpeg);
-                    // int jpegSubsamp;
-                    // tjhandle _jpegDecompressor = tjInitDecompress();
-                    // tjDecompressHeader2(_jpegDecompressor, 
-                    //                     (unsigned char*) jpeg,
-                    //                     shared_memory->preview_buffer[i].size, 
-                    //                     &shared_memory->preview_buffer[i].width, 
-                    //                     &shared_memory->preview_buffer[i].height, 
-                    //                     &jpegSubsamp);         
-                    // tjDecompress2(  _jpegDecompressor, 
-                    //                 (unsigned char*) jpeg, 
-                    //                 shared_memory->preview_buffer[i].size, 
-                    //                 shared_memory->preview_buffer[i].raw_data,
-                    //                 shared_memory->preview_buffer[i].width, 
-                    //                 0,
-                    //                 shared_memory->preview_buffer[i].height, 
-                    //                 TJPF_RGB, TJFLAG_FASTDCT);
-                    //                 shared_memory->preview_buffer[i].pre_state = pre_render;
-                    // tjDestroy(_jpegDecompressor);
                     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shared_memory->preview_buffer[i].width, 
                                 shared_memory->preview_buffer[i].height, 0, GL_RGB, GL_UNSIGNED_BYTE, 
                                 shared_memory->preview_buffer[i].raw_data);
 
                     glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
+                    glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
                     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                     glfwSwapBuffers(*window);
                     shared_memory->preview_buffer[i].pre_state = pre_capture;
@@ -255,6 +247,7 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 }
             }
         }
+        if(button_pushed == 1) button_pushed = 0;
         glfwPollEvents();
     }
 

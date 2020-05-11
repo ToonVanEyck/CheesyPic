@@ -6,6 +6,8 @@ project(glfw_test   VERSION     1.0
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 
+add_definitions(-DNO_CAM)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)

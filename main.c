@@ -6,6 +6,11 @@
 
 int main(int argc, char *argv[])
 {
+    #ifdef NO_CAM
+        printf("Not using camera!\n");
+    #endif
+
+
     // read settings
 
     // check requirments
