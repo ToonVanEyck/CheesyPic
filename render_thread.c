@@ -66,7 +66,7 @@ static const char* fragment_shader_text =
 "uniform sampler2D texPuppy;\n"
 "void main()\n"
 "{\n"
-"   outColor = mix(texture(texPuppy, Texcoord), texture(tex_preview, Texcoord), 0.8);//* vec4(color, 1.0);\n"
+"   outColor = mix(texture(texPuppy, Texcoord), texture(tex_preview, Texcoord), 0.5);\n"
 "}\n";
 
 static void error_callback(int error, const char* description)
@@ -171,6 +171,11 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glUseProgram(*program);
     glGenTextures(NUM_TEXTURES, textures);
 
+    // int width, height;
+    // unsigned char* image;
+    // char* jpeg;
+    // unsigned long size;
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textures[0]);
         // size = readJpg("test.jpg",&jpeg);
@@ -182,11 +187,6 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // int width, height;
-    // unsigned char* image;
-    // char* jpeg;
-    // unsigned long size;
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textures[1]);
@@ -219,7 +219,10 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
     mat4x4 m, p, mvp;
     while (!glfwWindowShouldClose(*window) && renderRunning)
     {
-        if(shared_memory->logic_state == log_idle && button_pushed)shared_memory->logic_state = log_triggred; 
+        if(shared_memory->logic_state == log_idle && button_pushed){
+            //printf("%sPhotobooth has been triggered\n",PR);
+            shared_memory->logic_state = log_triggred; 
+        }
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
             for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
                 if(shared_memory->preview_buffer[i].pre_state == pre_render){
@@ -248,6 +251,7 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
             }
         }
         if(button_pushed == 1) button_pushed = 0;
+        sem_post(&shared_memory->sem_logic);
         glfwPollEvents();
     }
 

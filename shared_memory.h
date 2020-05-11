@@ -15,7 +15,7 @@ typedef enum{
 }preview_state_t;
 
 typedef enum{
-    log_idle,
+    log_idle = 0,
     log_triggred,
     log_countdown_3,
     log_countdown_2,
@@ -43,6 +43,7 @@ typedef struct{
 typedef struct{
     sem_t sem_decode;
     sem_t sem_render;
+    sem_t sem_logic;
     preview_buffer_t preview_buffer[NUM_JPEG_BUFFERS];
     //overlay_bufer[] overlay_buffer[2];
     logic_state_t logic_state;
