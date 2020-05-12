@@ -6,6 +6,9 @@
 #define PREVIEW_WIDTH  1056
 #define PREVIEW_HEIGHT 704
 
+#define OVERLAY_WIDTH  1620
+#define OVERLAY_HEIGHT 1080
+
 #define NUM_JPEG_BUFFERS 2
 
 typedef enum{
@@ -32,20 +35,22 @@ typedef struct{
     const char *jpeg_data;
     unsigned int width;
     unsigned int height;
-    unsigned char raw_data[PREVIEW_WIDTH * PREVIEW_HEIGHT * 3];
+    unsigned char raw_data[PREVIEW_WIDTH * PREVIEW_HEIGHT * 4];
     preview_state_t pre_state;
 }preview_buffer_t;
 
 typedef struct{
-
-}overlay_bufer;
+    unsigned int width;
+    unsigned int height;
+    unsigned char raw_data[OVERLAY_WIDTH * OVERLAY_HEIGHT * 4];
+}overlay_bufer_t;
 
 typedef struct{
     sem_t sem_decode;
     sem_t sem_render;
     sem_t sem_logic;
     preview_buffer_t preview_buffer[NUM_JPEG_BUFFERS];
-    //overlay_bufer[] overlay_buffer[2];
+    overlay_bufer_t overlay_buffer;
     logic_state_t logic_state;
 }shared_memory_t;
 

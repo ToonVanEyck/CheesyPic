@@ -20,14 +20,16 @@ void stop_decode_thread()
 int init_decode_thread(preview_buffer_t preview_buffer[])
 {
     #ifdef NO_CAM   // prefill decoded buffers
-        for(int i = 0; i<PREVIEW_WIDTH*PREVIEW_HEIGHT*3;i+=3){
-            preview_buffer[0].raw_data[i]=255;
+        for(int i = 0; i<PREVIEW_WIDTH*PREVIEW_HEIGHT*4;i+=4){
+            preview_buffer[0].raw_data[i+0]=255;//red channel
+            preview_buffer[0].raw_data[i+3]=255;//alpha channel    
         }
         preview_buffer[0].height = PREVIEW_HEIGHT;
         preview_buffer[0].width = PREVIEW_WIDTH;
 
-        for(int i = 2; i<PREVIEW_WIDTH*PREVIEW_HEIGHT*3;i+=3){
-            preview_buffer[1].raw_data[i]=255;
+        for(int i = 0; i<PREVIEW_WIDTH*PREVIEW_HEIGHT*4;i+=4){
+            preview_buffer[1].raw_data[i+2]=255;//blue channel
+            preview_buffer[1].raw_data[i+3]=0;//alpha channel
         }
         preview_buffer[1].height = PREVIEW_HEIGHT;
         preview_buffer[1].width = PREVIEW_WIDTH;
@@ -59,7 +61,7 @@ void run_decode_thread(shared_memory_t *shared_memory)
                                         shared_memory->preview_buffer[i].width, 
                                         0,
                                         shared_memory->preview_buffer[i].height, 
-                                        TJPF_RGB, TJFLAG_FASTDCT);
+                                        TJPF_RGBA, TJFLAG_FASTDCT);
                                         shared_memory->preview_buffer[i].pre_state = pre_render;
                                         //printf("%s%d Decode complete\n",PD,i);
                     }else{

@@ -63,10 +63,10 @@ static const char* fragment_shader_text =
 "in vec2 Texcoord;\n"
 "out vec4 outColor;\n"
 "uniform sampler2D tex_preview;\n"
-"uniform sampler2D texPuppy;\n"
+"uniform sampler2D tex_overlay;\n"
 "void main()\n"
 "{\n"
-"   outColor = mix(texture(texPuppy, Texcoord), texture(tex_preview, Texcoord), 0.5);\n"
+"   outColor = mix(texture(tex_overlay, Texcoord), texture(tex_preview, Texcoord), 0.5);\n"
 "}\n";
 
 static void error_callback(int error, const char* description)
@@ -181,7 +181,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
         // size = readJpg("test.jpg",&jpeg);
         // decodeJpg(jpeg,size,&image,&width,&height);
         // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glUniform1i(glGetUniformLocation(*program, "texPuppy"), 0);
+    glUniform1i(glGetUniformLocation(*program, "tex_overlay"), 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -236,12 +236,19 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                     m[1][1] = (square_hight >= width)?((float)PREVIEW_HEIGHT*(float)width)/((float)PREVIEW_WIDTH*(float)height):1.0;
 
                     glViewport(0, 0, width, height);
+                    glActiveTexture(GL_TEXTURE1);
                     glClear(GL_COLOR_BUFFER_BIT);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shared_memory->preview_buffer[i].width, 
-                                shared_memory->preview_buffer[i].height, 0, GL_RGB, GL_UNSIGNED_BYTE, 
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->preview_buffer[i].width, 
+                                shared_memory->preview_buffer[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
                                 shared_memory->preview_buffer[i].raw_data);
-
                     glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
+
+                    glActiveTexture(GL_TEXTURE0);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->overlay_buffer.width, 
+                                shared_memory->overlay_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
+                                shared_memory->overlay_buffer.raw_data);
+                    glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
+                    
                     glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
                     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                     glfwSwapBuffers(*window);

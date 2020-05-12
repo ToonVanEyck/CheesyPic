@@ -57,10 +57,10 @@ static const char* fragment_shader_text =
 "in vec2 Texcoord;\n"
 "out vec4 outColor;\n"
 "uniform sampler2D tex_preview;\n"
-"uniform sampler2D texPuppy;\n"
+"uniform sampler2D tex_overlay;\n"
 "void main()\n"
 "{\n"
-"   outColor = mix(texture(texPuppy, Texcoord), texture(tex_preview, Texcoord), 0.8);//* vec4(color, 1.0);\n"
+"   outColor = mix(texture(tex_overlay, Texcoord), texture(tex_preview, Texcoord), 0.8);//* vec4(color, 1.0);\n"
 "}\n";
  
 static void error_callback(int error, const char* description)
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
         size = readJpg("test.jpg",&jpeg);
         decodeJpg(jpeg,size,&image,&width,&height);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glUniform1i(glGetUniformLocation(program, "texPuppy"), 0);
+    glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

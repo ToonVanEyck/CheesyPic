@@ -3,6 +3,7 @@
 #include "capture_thread.h"
 #include "logic.h"
 #include "shared_memory.h"
+#include "lodepng.h"
 
 int main(int argc, char *argv[])
 {
@@ -39,8 +40,26 @@ int main(int argc, char *argv[])
     int status = 0;
     int c = 0;
     const struct timespec sem_timespec = {0,100000};
+
+    //todo remove this
+    unsigned error;
+    unsigned char* image = 0;
+    unsigned width, height;
+    unsigned char* png = 0;
+    size_t pngsize;
+
+    error = lodepng_load_file(&png, &pngsize, "push_or_scan.png");
+    if(!error) error = lodepng_decode32(&image,
+                                        &shared_memory->overlay_buffer.width, 
+                                        &shared_memory->overlay_buffer.height, 
+                                        png, pngsize);
+    if(error) printf("error %u: %s\n", error, lodepng_error_text(error));
+    free(png);
+    memcpy(shared_memory->overlay_buffer.raw_data,image,shared_memory->overlay_buffer.width*shared_memory->overlay_buffer.height*4);
+    free(image);
+
     while(capture_pid && render_pid){
-        if(sem_timedwait(&shared_memory->sem_logic,&sem_timespec)==0){
+        if(sem_timedwait(&shared_memory->sem_logic,&sem_timespec)==0){ // this is messing up the cleanup code ...
             // check if a proccess has died.
             pid_t pid = waitpid(-1,&status,WNOHANG);
             if(pid == capture_pid) capture_pid = 0; 
