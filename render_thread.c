@@ -66,7 +66,8 @@ static const char* fragment_shader_text =
 "uniform sampler2D tex_overlay;\n"
 "void main()\n"
 "{\n"
-"   outColor = mix(texture(tex_overlay, Texcoord), texture(tex_preview, Texcoord), 0.5);\n"
+//"   outColor = mix(texture(tex_overlay, Texcoord), texture(tex_preview, Texcoord), 0.5);\n"
+"   outColor = texture(tex_overlay, Texcoord) + texture(tex_preview, Texcoord);\n"
 "}\n";
 
 static void error_callback(int error, const char* description)
@@ -115,7 +116,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
-    *window = glfwCreateWindow(600, 400, "Simple example", NULL/*glfwGetPrimaryMonitor()*/, NULL);
+    *window = glfwCreateWindow(600, 400, "CheesyPic Photobooth by ToonVanEyck", NULL/*glfwGetPrimaryMonitor()*/, NULL);
     if (!*window)
     {
         glfwTerminate();
@@ -149,6 +150,10 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     *fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(*fragment_shader, 1, &fragment_shader_text, NULL);
     glCompileShader(*fragment_shader);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // continue: https://learnopengl.com/Advanced-OpenGL/Blending
 
     *program = glCreateProgram();
     glAttachShader(*program, *vertex_shader);
