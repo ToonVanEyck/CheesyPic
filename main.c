@@ -39,8 +39,7 @@ int main(int argc, char *argv[])
     // run logic and wait for threads / processes to finish
     int status = 0;
     int c = 0;
-    const struct timespec sem_timespec = {0,100000};
-
+    
     //todo remove this
     unsigned error;
     unsigned char* image = 0;
@@ -58,15 +57,15 @@ int main(int argc, char *argv[])
     memcpy(shared_memory->overlay_buffer.raw_data,image,shared_memory->overlay_buffer.width*shared_memory->overlay_buffer.height*4);
     free(image);
 
+    const struct timespec sem_timespec = {0,100000};
     while(capture_pid && render_pid){
-        if(sem_timedwait(&shared_memory->sem_logic,&sem_timespec)==0){ // this is messing up the cleanup code ...
-            // check if a proccess has died.
-            pid_t pid = waitpid(-1,&status,WNOHANG);
-            if(pid == capture_pid) capture_pid = 0; 
-            if(pid == render_pid) render_pid = 0; 
-            // execute photobooth logic
-            run_logic(shared_memory);
-        }
+        sem_timedwait(&shared_memory->sem_logic,&sem_timespec);
+        // check if a proccess has died.
+        pid_t pid = waitpid(-1,&status,WNOHANG);
+        if(pid == capture_pid) capture_pid = 0; 
+        if(pid == render_pid) render_pid = 0; 
+        // execute photobooth logic
+        run_logic(shared_memory);
     }
     //cleanup code
     sleep(1);
