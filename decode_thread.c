@@ -30,7 +30,7 @@ int init_decode_thread(preview_buffer_t preview_buffer[])
 
         for(int i = 0; i<PREVIEW_WIDTH*PREVIEW_HEIGHT*4;i+=4){
             preview_buffer[1].raw_data[i+2]=255;//blue channel
-            preview_buffer[1].raw_data[i+3]=0;//alpha channel
+            preview_buffer[1].raw_data[i+3]=255;//alpha channel
             if(i/4%PREVIEW_WIDTH > 800)preview_buffer[1].raw_data[i+1]=255;
         }
         preview_buffer[1].height = PREVIEW_HEIGHT;

@@ -66,8 +66,7 @@ static const char* fragment_shader_text =
 "uniform sampler2D tex_overlay;\n"
 "void main()\n"
 "{\n"
-//"   outColor = mix(texture(tex_overlay, Texcoord), texture(tex_preview, Texcoord), 0.5);\n"
-"   outColor = texture(tex_overlay, Texcoord) + texture(tex_preview, Texcoord);\n"
+"   outColor = mix(texture(tex_preview, Texcoord),texture(tex_overlay, Texcoord), texture(tex_overlay, Texcoord).a);\n"
 "}\n";
 
 static void error_callback(int error, const char* description)
@@ -150,10 +149,6 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     *fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(*fragment_shader, 1, &fragment_shader_text, NULL);
     glCompileShader(*fragment_shader);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // continue: https://learnopengl.com/Advanced-OpenGL/Blending
 
     *program = glCreateProgram();
     glAttachShader(*program, *vertex_shader);

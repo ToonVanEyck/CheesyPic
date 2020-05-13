@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     unsigned char* png = 0;
     size_t pngsize;
 
-    error = lodepng_load_file(&png, &pngsize, "../overlays/preview.png");
+    error = lodepng_load_file(&png, &pngsize, "../overlays/push_2.png");
     if(!error) error = lodepng_decode32(&image,
                                         &shared_memory->overlay_buffer.width, 
                                         &shared_memory->overlay_buffer.height, 
