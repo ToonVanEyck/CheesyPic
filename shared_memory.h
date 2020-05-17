@@ -28,6 +28,8 @@ typedef enum{
     log_procces,
     log_print
 }logic_state_t;
+#define FIRST_STATE log_idle
+#define LAST_STATE log_print
 
 typedef struct{
     unsigned long size;

@@ -80,9 +80,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
-
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
-        button_pushed = 1;
+        button_pushed = 'c';
+    if (key == GLFW_KEY_KP_ADD && action == GLFW_PRESS)
+        button_pushed = '+';
+    if (key == GLFW_KEY_KP_SUBTRACT && action == GLFW_PRESS)
+        button_pushed = '-';
 }
 
 void start_render_thread(shared_memory_t *shared_memory)
@@ -219,10 +222,24 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
     mat4x4 m, p, mvp;
     while (!glfwWindowShouldClose(*window) && renderRunning)
     {
-        if(shared_memory->logic_state == log_idle && button_pushed){
-            //printf("%sPhotobooth has been triggered\n",PR);
-            shared_memory->logic_state = log_triggred; 
+        switch(button_pushed){
+            case 'c':
+                if(shared_memory->logic_state == log_idle ){
+                    //printf("%sPhotobooth has been triggered\n",PR);
+                    shared_memory->logic_state = log_triggred; 
+                }break;
+            case '+':
+                if(shared_memory->logic_state == LAST_STATE){shared_memory->logic_state = FIRST_STATE;}
+                else {shared_memory->logic_state++;}
+                break;
+            case '-':
+                if(shared_memory->logic_state == FIRST_STATE){shared_memory->logic_state = LAST_STATE;}
+                else{shared_memory->logic_state--;}
+                break;
+            default:
+                break;
         }
+        
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
             for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
                 if(shared_memory->preview_buffer[i].pre_state == pre_render){
@@ -257,7 +274,7 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 }
             }
         }
-        if(button_pushed == 1) button_pushed = 0;
+        if(button_pushed != 0) button_pushed = 0;
         sem_post(&shared_memory->sem_logic);
         glfwPollEvents();
     }

@@ -3,7 +3,6 @@
 #include "capture_thread.h"
 #include "logic.h"
 #include "shared_memory.h"
-#include "lodepng.h"
 
 int main(int argc, char *argv[])
 {
@@ -11,8 +10,9 @@ int main(int argc, char *argv[])
         printf("Not using camera!\n");
     #endif
 
-
+    photobooth_config_t pbc;
     // read settings
+    init_logic(&pbc);
 
     // check requirments
 
@@ -40,23 +40,6 @@ int main(int argc, char *argv[])
     int status = 0;
     int c = 0;
     
-    //todo remove this
-    unsigned error;
-    unsigned char* image = 0;
-    unsigned width, height;
-    unsigned char* png = 0;
-    size_t pngsize;
-
-    error = lodepng_load_file(&png, &pngsize, "../overlays/push_2.png");
-    if(!error) error = lodepng_decode32(&image,
-                                        &shared_memory->overlay_buffer.width, 
-                                        &shared_memory->overlay_buffer.height, 
-                                        png, pngsize);
-    if(error) printf("error %u: %s\n", error, lodepng_error_text(error));
-    free(png);
-    memcpy(shared_memory->overlay_buffer.raw_data,image,shared_memory->overlay_buffer.width*shared_memory->overlay_buffer.height*4);
-    free(image);
-
     const struct timespec sem_timespec = {0,100000};
     while(capture_pid && render_pid){
         sem_timedwait(&shared_memory->sem_logic,&sem_timespec);
@@ -65,7 +48,7 @@ int main(int argc, char *argv[])
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
         // execute photobooth logic
-        run_logic(shared_memory);
+        run_logic(shared_memory,&pbc);
     }
     //cleanup code
     sleep(1);
@@ -85,5 +68,6 @@ int main(int argc, char *argv[])
     sem_destroy(&shared_memory->sem_render);
     sem_destroy(&shared_memory->sem_logic);
 
+    free_config(&pbc);
     exit(0);
 }
