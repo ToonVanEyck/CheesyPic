@@ -10,9 +10,10 @@ int main(int argc, char *argv[])
         printf("Not using camera!\n");
     #endif
 
-    photobooth_config_t pbc;
+    photobooth_config_t config;
+    photobooth_session_t session;
     // read settings
-    init_logic(&pbc);
+    init_logic(&config, &session);
 
     // check requirments
 
@@ -23,6 +24,7 @@ int main(int argc, char *argv[])
     sem_init(&shared_memory->sem_decode,0,0);
     sem_init(&shared_memory->sem_render,1,0);
     sem_init(&shared_memory->sem_logic,1,0);
+    shared_memory->photobooth_active = 1;
     // start threads
     pid_t capture_pid = fork();
     printf("capture_pid %d -- %d\n",capture_pid,getpid());
@@ -48,7 +50,7 @@ int main(int argc, char *argv[])
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
         // execute photobooth logic
-        run_logic(shared_memory,&pbc);
+        run_logic(shared_memory,&config, &session);
     }
     //cleanup code
     sleep(1);
@@ -68,6 +70,6 @@ int main(int argc, char *argv[])
     sem_destroy(&shared_memory->sem_render);
     sem_destroy(&shared_memory->sem_logic);
 
-    free_config(&pbc);
+    free_config(&config);
     exit(0);
 }

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <signal.h>
 
 #include "shared_memory.h"
 #include "lodepng.h"
@@ -29,7 +31,7 @@ typedef struct{
 }movie_t;
 
 typedef struct{
-    unsigned delay_ms;
+    struct itimerval delay;
     overlay_t cd_3;
     overlay_t cd_2;
     overlay_t cd_1;
@@ -46,6 +48,7 @@ typedef struct{
 }countdown_t;
 
 typedef struct{
+    unsigned num_photos_in_design;
     countdown_t countdown;
     overlay_t idle;
     overlay_t smile;
@@ -53,10 +56,16 @@ typedef struct{
 }photobooth_config_t;
 
 
-int init_logic(photobooth_config_t *pbc);
+typedef struct photobooth_session{
+    unsigned photo_counter;
+    unsigned char *current_jpg;
+    unsigned char **raw_captures; // array of char pointers
+}photobooth_session_t; 
+
+int init_logic(photobooth_config_t *config, photobooth_session_t *session);
 int load_png_image(overlay_t *overlay);
-void free_config(photobooth_config_t *pbc);
-int read_config(photobooth_config_t *pbc);
-void run_logic(shared_memory_t *shared_memory,photobooth_config_t *pbc);
+void free_config(photobooth_config_t *config);
+int read_config(photobooth_config_t *config);
+void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photobooth_session_t *session);
 
 #endif

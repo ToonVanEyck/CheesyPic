@@ -10,7 +10,6 @@
 #include <sys/poll.h>
 #include <sys/time.h>
 #include <sys/timerfd.h>
-#include <sys/signalfd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/mman.h>

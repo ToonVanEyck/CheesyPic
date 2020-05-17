@@ -9,6 +9,8 @@
 #define OVERLAY_WIDTH  1620
 #define OVERLAY_HEIGHT 1080
 
+#define CAPTURE_MAX_MP 20
+
 #define NUM_JPEG_BUFFERS 2
 
 typedef enum{
@@ -45,14 +47,25 @@ typedef struct{
     unsigned int width;
     unsigned int height;
     unsigned char raw_data[OVERLAY_WIDTH * OVERLAY_HEIGHT * 4];
-}overlay_bufer_t;
+}overlay_buffer_t;
 
 typedef struct{
+    unsigned long size;
+    void *cameraFile;
+    const char *jpeg_data;
+    unsigned int width;
+    unsigned int height;
+    unsigned char raw_data[CAPTURE_MAX_MP * 4000000];
+}capture_buffer_t;
+
+typedef struct{
+    int photobooth_active;
     sem_t sem_decode;
     sem_t sem_render;
     sem_t sem_logic;
     preview_buffer_t preview_buffer[NUM_JPEG_BUFFERS];
-    overlay_bufer_t overlay_buffer;
+    overlay_buffer_t overlay_buffer;
+    capture_buffer_t capture_buffer;
     logic_state_t logic_state;
 }shared_memory_t;
 
