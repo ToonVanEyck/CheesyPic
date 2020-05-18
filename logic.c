@@ -100,7 +100,13 @@ void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
 void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photobooth_session_t *session)
 {
     static logic_state_t prev_logic_state = -1;
+    static int prev_is_active = 0;
     int init_state = (prev_logic_state != shared_memory->logic_state);
+
+    if(prev_is_active != shared_memory->photobooth_active){
+        prev_is_active = shared_memory->photobooth_active;
+        printf("%sLogic is %s!\n",PL,shared_memory->photobooth_active?"active":"disabled");
+    }
 
     if(init_state){
         prev_logic_state = shared_memory->logic_state;

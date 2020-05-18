@@ -78,16 +78,11 @@ static char button_pushed;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
         glfwSetWindowShouldClose(window, GLFW_TRUE);
-    if (key == GLFW_KEY_C && action == GLFW_PRESS)
-        button_pushed = 'c';
-    if (key == GLFW_KEY_KP_ADD && action == GLFW_PRESS)
-        button_pushed = '+';
-    if (key == GLFW_KEY_KP_SUBTRACT && action == GLFW_PRESS)
-        button_pushed = '-';
-    if (key == GLFW_KEY_A && action == GLFW_PRESS)
-        button_pushed = 'a';
+    }else if (action == GLFW_PRESS){
+        button_pushed = *glfwGetKeyName(key,scancode);
+    }
 }
 
 void start_render_thread(shared_memory_t *shared_memory)
@@ -225,9 +220,11 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
     while (!glfwWindowShouldClose(*window) && renderRunning)
     {
         switch(button_pushed){
+            case 'a':
+                shared_memory->photobooth_active ^= 1;
+                break;
             case 'c':
                 if(shared_memory->logic_state == log_idle && shared_memory->photobooth_active){
-                    //printf("%sPhotobooth has been triggered\n",PR);
                     shared_memory->logic_state = log_triggred; 
                 }break;
             case '+':
@@ -239,9 +236,6 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 shared_memory->photobooth_active = 0;
                 if(shared_memory->logic_state == FIRST_STATE){shared_memory->logic_state = LAST_STATE;}
                 else{shared_memory->logic_state--;}
-                break;
-            case 'a':
-                shared_memory->photobooth_active = 1;
                 break;
             default:
                 break;
