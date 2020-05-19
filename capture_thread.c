@@ -1,8 +1,7 @@
 #include "capture_thread.h"
 
-#define FDS_MAX 2
+#define FDS_MAX 1
 #define FDS_TIMER 0
-#define FDS_SIGNAL 1
 
 static int captureRunning;
 
@@ -53,7 +52,6 @@ int init_capture_thread(struct pollfd *fds, int *numfd,GPContext **ctx, Camera *
     }
 
     if (init_timer(fds,numfd)) return 1;
-   // if (init_signal(fds,numfd)) return 1;
 }
 
 void clean_capture_thread(struct pollfd *fds, int *numfd,GPContext **ctx, Camera **camera)
@@ -87,28 +85,6 @@ int init_timer(struct pollfd *fds, int *numfd)
     (*numfd)++;
     return 0;
 }
-
-int init_signal(struct pollfd *fds, int *numfd)
-{
-    sigset_t sigset;
-    sigemptyset(&sigset);
-    sigaddset(&sigset, SIGINT);
-
-    fds[FDS_SIGNAL].fd = signalfd(-1, &sigset, 0);
-
-    if(fds[FDS_SIGNAL].fd == -1){
-        fprintf(stderr, "Failed to allocate signalfd\n");
-        return 1;
-    }
-    if (pthread_sigmask(SIG_BLOCK, &sigset, NULL) == -1){
-        fprintf(stderr, "Failed to block signals\n");
-        return 1;
-    }
-    fds[FDS_SIGNAL].events = POLLIN;
-    (*numfd)++;
-    return 0;
-}
-
 
 int init_camera(GPContext **ctx, Camera **camera)
 {
