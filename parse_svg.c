@@ -27,6 +27,19 @@ xmlNode *xml_node_by_name(xmlNode * a_node, const char *name)
     return NULL;
 }
 
+xmlNode *xml_get_node_where_attribute_has_value(xmlNode * a_node, const char *attribute_key, const char *attribute_value)
+{
+    for (xmlNode *child_node = a_node->children; child_node; child_node = child_node->next) {
+        if (child_node->type == XML_ELEMENT_NODE) {
+            xmlChar *label = xmlGetProp(child_node,attribute_key);
+            if(label && !strcmp(label,attribute_value)){
+                return child_node;
+            }
+        }
+    }
+    return NULL;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -45,13 +58,12 @@ int main(int argc, char *argv[])
     /* check if parsing suceeded */
     if(doc == NULL)return -1;
     xmlNode *root_element = xmlDocGetRootElement(doc);
+    if(root_element == NULL)return -1;
     xmlNode *svg_element = xml_node_by_name(root_element,"svg");
-
-    for (xmlNode *child_node = svg_element->children; child_node; child_node = child_node->next) {
-        printf("attribute : %s \n",child_node->properties->name);
-    }
-
-    //print_element_names(svg_element);
+    if(svg_element == NULL)return -1;
+    xmlNode *photos_node = xml_get_node_where_attribute_has_value(svg_element,"label","photos");
+    if(photos_node == NULL)return -1;
+    print_element_names(photos_node);
 
 	/* free up the resulting document */
 	xmlFreeDoc(doc);
