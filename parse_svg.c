@@ -126,44 +126,16 @@ int main(int argc, char *argv[])
         photo_locations[i].y = strtod(xmlGetProp(rect_node,"y"),NULL);
         photo_locations[i].width  = strtod(xmlGetProp(rect_node,"width"),NULL);
         photo_locations[i].height = strtod(xmlGetProp(rect_node,"height"),NULL);
-        // for(xmlNode *cur_node = rect_node ; cur_node != svg_element ; cur_node = cur_node->parent){
-        //     strcat(photo_locations[i].transformation_string,xmlGetProp(rect_node,"transform"));
-        // }
+        for(xmlNode *cur_node = rect_node ; cur_node != svg_element ; cur_node = cur_node->parent){
+            char *transform = xmlGetProp(cur_node,"transform");
+            if(transform){
+                strcat(photo_locations[i].transformation_string,transform);
+                strcat(photo_locations[i].transformation_string,";");
+            }
+        }
         print_photo_location(&photo_locations[i]);
     }
 
 	xmlFreeDoc(doc);
     return 0;
 }
-
-/*
-void QDesign::photo_layout_from_svg(QString input_svg)
-{
-    _photo_layout_list->clear();
-    QFile svg_file(input_svg);
-    QDomDocument doc;
-    if (svg_file.open(QIODevice::ReadOnly)){
-        doc.setContent(&svg_file);
-        for(int i = 0;i<doc.elementsByTagName("svg").at(0).childNodes().count();i++){
-            if(doc.elementsByTagName("svg").at(0).childNodes().at(i).toElement().attributeNode("inkscape:label").value() == "photos"){
-                QDomNodeList photos = doc.elementsByTagName("svg").at(0).childNodes().at(i).toElement().elementsByTagName("rect");
-                for(int j = 0; j < photos.count();j++){
-                    QDomNode node = photos.at(j);
-                    int photo_num = node.parentNode().toElement().elementsByTagName("text").at(0).childNodes().at(0).toElement().text().toInt();
-                    QRect rect((int)qFloor(node.toElement().attributeNode("x").value().toDouble()),
-                               (int)qFloor(node.toElement().attributeNode("y").value().toDouble()),
-                               (int)qFloor(node.toElement().attributeNode("width").value().toDouble()),
-                               (int)qFloor(node.toElement().attributeNode("height").value().toDouble()));
-                    QTransform transformation;
-                    while(node.toElement().tagName() != "svg"){
-                        transformation *= string_to_transform(node.toElement().attributeNode("transform").value());
-                        node = node.parentNode();
-                    }
-                    _photo_layout_list->push_back(new PhotoLayout(rect,transformation,photo_num));
-                }
-            }
-        }
-        svg_file.close();
-    }
-}
-*/
