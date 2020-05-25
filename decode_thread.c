@@ -42,40 +42,69 @@ void run_decode_thread(shared_memory_t *shared_memory)
 {
     while(decodeRunning){ 
         sem_wait(&shared_memory->sem_decode);
-        for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
-            if(shared_memory->preview_buffer[0].pre_state == pre_decode && shared_memory->preview_buffer[1].pre_state == pre_decode)printf("%serror?\n",PD);
-            if(shared_memory->preview_buffer[i].pre_state == pre_decode){ // wait for buffer to fill
-                #ifndef NO_CAM
-                    int jpegSubsamp;
-                    tjhandle _jpegDecompressor = tjInitDecompress();
-                    tjDecompressHeader2(_jpegDecompressor, 
-                                        (unsigned char*)shared_memory->preview_buffer[i].jpeg_data, 
-                                        shared_memory->preview_buffer[i].size, 
-                                        &shared_memory->preview_buffer[i].width, 
-                                        &shared_memory->preview_buffer[i].height, 
-                                        &jpegSubsamp);
-                    //printf("%ssize %dx%d\n",PD,shared_memory->preview_buffer[i].width,shared_memory->preview_buffer[i].height);
-                    if(shared_memory->preview_buffer[i].width * shared_memory->preview_buffer[i].height <= PREVIEW_WIDTH * PREVIEW_HEIGHT){               
-                        tjDecompress2(  _jpegDecompressor, 
-                                        (unsigned char*)shared_memory->preview_buffer[i].jpeg_data, 
-                                        shared_memory->preview_buffer[i].size, 
-                                        shared_memory->preview_buffer[i].raw_data,
-                                        shared_memory->preview_buffer[i].width, 
-                                        0,
-                                        shared_memory->preview_buffer[i].height, 
-                                        TJPF_RGBA, TJFLAG_FASTDCT);
-                                        shared_memory->preview_buffer[i].pre_state = pre_render;
-                                        //printf("%s%d Decode complete\n",PD,i);
-                    }else{
-                        printf("%sERROR image to large\n",PD);
-                        decodeRunning = 0;
-                    }
-                    tjDestroy(_jpegDecompressor);
-                    break;
-                #else
-                    shared_memory->preview_buffer[i].pre_state = pre_render;
-                #endif
+        if(shared_memory->logic_state != log_decode || !shared_memory->photobooth_active){
+            // -------- PREVIEW LOGIC --------
+            for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
+                if(shared_memory->preview_buffer[0].pre_state == pre_decode && shared_memory->preview_buffer[1].pre_state == pre_decode)printf("%serror?\n",PD);
+                if(shared_memory->preview_buffer[i].pre_state == pre_decode){ // wait for buffer to fill
+                    #ifndef NO_CAM
+                        int jpegSubsamp;
+                        tjhandle _jpegDecompressor = tjInitDecompress();
+                        tjDecompressHeader2(_jpegDecompressor, 
+                                            (unsigned char*)shared_memory->preview_buffer[i].jpeg_data, 
+                                            shared_memory->preview_buffer[i].size, 
+                                            &shared_memory->preview_buffer[i].width, 
+                                            &shared_memory->preview_buffer[i].height, 
+                                            &jpegSubsamp);
+                        //printf("%ssize %dx%d\n",PD,shared_memory->preview_buffer[i].width,shared_memory->preview_buffer[i].height);
+                        if(shared_memory->preview_buffer[i].width * shared_memory->preview_buffer[i].height <= PREVIEW_WIDTH * PREVIEW_HEIGHT){               
+                            tjDecompress2(  _jpegDecompressor, 
+                                            (unsigned char*)shared_memory->preview_buffer[i].jpeg_data, 
+                                            shared_memory->preview_buffer[i].size, 
+                                            shared_memory->preview_buffer[i].raw_data,
+                                            shared_memory->preview_buffer[i].width, 
+                                            0,
+                                            shared_memory->preview_buffer[i].height, 
+                                            TJPF_RGBA, TJFLAG_FASTDCT);
+                                            shared_memory->preview_buffer[i].pre_state = pre_render;
+                                            //printf("%s%d Decode complete\n",PD,i);
+                        }else{
+                            printf("%sERROR image to large\n",PD);
+                            decodeRunning = 0;
+                        }
+                        tjDestroy(_jpegDecompressor);
+                        break;
+                    #else
+                        shared_memory->preview_buffer[i].pre_state = pre_render;
+                    #endif
+                }
             }
+        }else{
+            // -------- CAPTURE LOGIC --------
+            int jpegSubsamp;
+            tjhandle _jpegDecompressor = tjInitDecompress();
+            tjDecompressHeader2(_jpegDecompressor, 
+                                (unsigned char*)shared_memory->capture_buffer.jpeg_data, 
+                                shared_memory->capture_buffer.size, 
+                                &shared_memory->capture_buffer.width, 
+                                &shared_memory->capture_buffer.height, 
+                                &jpegSubsamp);
+            if(shared_memory->capture_buffer.width * shared_memory->capture_buffer.height <= CAPTURE_MAX_MP * 4000000){               
+                tjDecompress2(  _jpegDecompressor, 
+                                (unsigned char*)shared_memory->capture_buffer.jpeg_data, 
+                                shared_memory->capture_buffer.size, 
+                                shared_memory->capture_buffer.raw_data,
+                                shared_memory->capture_buffer.width, 
+                                0,
+                                shared_memory->capture_buffer.height, 
+                                TJPF_RGBA, TJFLAG_FASTDCT);
+                                shared_memory->logic_state = log_reveal;
+                                //printf("%s%d Decode complete\n",PD,i);
+            }else{
+                printf("%sERROR image to large\n",PD);
+                decodeRunning = 0;
+            }
+            tjDestroy(_jpegDecompressor);
         }
         sem_post(&shared_memory->sem_render);
     }

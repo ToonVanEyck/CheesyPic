@@ -53,6 +53,9 @@ typedef struct{
     overlay_t idle;
     overlay_t smile;
     overlay_t print;
+    struct itimerval preview_time;
+    unsigned char *preview_mirror;
+    unsigned char *reveal_mirror;
 }photobooth_config_t;
 
 
@@ -62,10 +65,10 @@ typedef struct photobooth_session{
     unsigned char **raw_captures; // array of char pointers
 }photobooth_session_t; 
 
-int init_logic(photobooth_config_t *config, photobooth_session_t *session);
+int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session);
 int load_png_image(overlay_t *overlay);
 void free_config(photobooth_config_t *config);
 int read_config(photobooth_config_t *config);
-void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photobooth_session_t *session);
+void run_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session);
 
 #endif

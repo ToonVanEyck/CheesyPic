@@ -26,7 +26,7 @@
 
 #define PC "\033[0;36m"
 
-#define FRAME_RATE 25
+#define FRAME_RATE 10//25
 #define FRAME_PERIOD (1000000000/FRAME_RATE)
 #define SLOWDOWN 0
 

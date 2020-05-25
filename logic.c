@@ -16,6 +16,7 @@ char* get_state_name(logic_state_t i)
         "\"countdown_2\"",
         "\"countdown_1\"",
         "\"capture\"",
+        "\"decode\"",
         "\"preview\"",
         "\"procces\"",
         "\"print\""};
@@ -25,12 +26,14 @@ char* get_state_name(logic_state_t i)
     return "UNDEFINED";
 }
 
-int init_logic(photobooth_config_t *config, photobooth_session_t *session)
+int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session)
 {
     signal(SIGALRM, alarm_capture);
     alarm_var = 0;
     memset(config,0,sizeof(photobooth_config_t));
     memset(session,0,sizeof(photobooth_session_t));
+    config->preview_mirror = &shared_memory->preview_mirror;
+    config->reveal_mirror = &shared_memory->reveal_mirror;
     read_config(config);
 }
 
@@ -75,7 +78,7 @@ int read_config(photobooth_config_t *config)
     config->countdown.data.image.cd_1.path = "../overlays/1.png";
     config->idle.path = "../overlays/push.png";
     config->print.path = "../overlays/printing.png";
-    config->smile.path = "../overlays/accept.png";
+    config->smile.path = "../overlays/smile.png";
 
     config->countdown.data.image.delay.it_value.tv_sec = 1;
 
@@ -88,6 +91,11 @@ int read_config(photobooth_config_t *config)
     if(load_png_image(&config->idle)) return -1;
     if(load_png_image(&config->print)) return -1;
     if(load_png_image(&config->smile)) return -1;
+
+    config->preview_time.it_value.tv_sec = 3;
+    *config->preview_mirror = 1;
+
+    *config->reveal_mirror = 1;
 }
 
 void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
@@ -100,12 +108,24 @@ void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
 void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photobooth_session_t *session)
 {
     static logic_state_t prev_logic_state = -1;
-    static int prev_is_active = 0;
     int init_state = (prev_logic_state != shared_memory->logic_state);
 
+    static int prev_is_active = 2;
     if(prev_is_active != shared_memory->photobooth_active){
         prev_is_active = shared_memory->photobooth_active;
-        printf("%sLogic is %s!\n",PL,shared_memory->photobooth_active?"active":"disabled");
+        printf("%slogic active:   [%s]\n",PL,shared_memory->photobooth_active?"YES":"NO");
+    }
+
+    static int prev_preview_mirror = 2;
+    if(prev_preview_mirror != shared_memory->preview_mirror){
+        prev_preview_mirror = shared_memory->preview_mirror;
+        printf("%smirror preview: [%s]\n",PL,shared_memory->preview_mirror?"YES":"NO");
+    }
+
+    static int prev_reveal_mirror = 2;
+    if(prev_reveal_mirror != shared_memory->reveal_mirror){
+        prev_reveal_mirror = shared_memory->reveal_mirror;
+        printf("%smirror reveal:  [%s]\n",PL,shared_memory->reveal_mirror?"YES":"NO");
     }
 
     if(init_state){
@@ -113,13 +133,15 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
         printf("%sEntered %s state!\n",PL,get_state_name(prev_logic_state));
     }
 
-
+    // select overlays here!
     switch (shared_memory->logic_state){
         case log_idle:          set_image_overlay(&shared_memory->overlay_buffer,&config->idle);                        break;
         case log_triggred:                                                                                              break;
         case log_countdown_3:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_3);   break;
         case log_countdown_2:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_2);   break;
         case log_countdown_1:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_1);   break;
+        case log_capture:       set_image_overlay(&shared_memory->overlay_buffer,&config->smile);                       break;
+        case log_reveal:                                                                                               break; //the captured image is shown instead of the overlay
         case log_print:         set_image_overlay(&shared_memory->overlay_buffer,&config->print);                       break;
         default:                                                                                                        break;
     }
@@ -134,6 +156,8 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 if(init_state){
                     if(session->photo_counter < config->num_photos_in_design){
                         shared_memory->logic_state = log_countdown_3;
+                    }else{
+                         shared_memory->logic_state = log_procces;
                     }
                 }
                 break;
@@ -161,10 +185,30 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                     setitimer(ITIMER_REAL,&config->countdown.data.image.delay,NULL);
                 }
                 if(alarm_var){
-                    shared_memory->logic_state = log_print;
+                    shared_memory->logic_state = log_capture;
                     alarm_var = 0;
                 }
 
+                break;
+            case log_capture:
+                // handled in capture thread
+                if(init_state){
+                    printf("%scaptured %d/%d photos.\n",PL,session->photo_counter+1,config->num_photos_in_design);
+                    session->photo_counter++;
+                }
+                break;
+            case log_decode:
+                // handled in decode thread
+                break;
+            case log_reveal:
+                // handled in decode thread
+                if(init_state){
+                    setitimer(ITIMER_REAL,&config->preview_time,NULL);
+                }
+                if(alarm_var){
+                    shared_memory->logic_state = log_triggred;
+                    alarm_var = 0;
+                }
                 break;
 
             case log_print:

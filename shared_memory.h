@@ -26,7 +26,8 @@ typedef enum{
     log_countdown_2,
     log_countdown_1,
     log_capture,
-    log_preview,
+    log_decode,
+    log_reveal,
     log_procces,
     log_print
 }logic_state_t;
@@ -59,7 +60,9 @@ typedef struct{
 }capture_buffer_t;
 
 typedef struct{
-    int photobooth_active;
+    unsigned char photobooth_active;
+    unsigned char preview_mirror;
+    unsigned char reveal_mirror;
     sem_t sem_decode;
     sem_t sem_render;
     sem_t sem_logic;

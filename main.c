@@ -9,12 +9,6 @@ int main(int argc, char *argv[])
     #ifdef NO_CAM
         printf("Not using camera!\n");
     #endif
-
-    photobooth_config_t config;
-    photobooth_session_t session;
-    // read settings
-    init_logic(&config, &session);
-
     // check requirments
 
     // setup ipc
@@ -25,6 +19,9 @@ int main(int argc, char *argv[])
     sem_init(&shared_memory->sem_render,1,0);
     sem_init(&shared_memory->sem_logic,1,0);
     shared_memory->photobooth_active = 1;
+    photobooth_config_t config;
+    photobooth_session_t session;
+    init_logic(shared_memory, &config, &session);
     // start threads
     pid_t capture_pid = fork();
     printf("capture_pid %d -- %d\n",capture_pid,getpid());

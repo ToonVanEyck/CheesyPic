@@ -48,11 +48,12 @@ static const char* vertex_shader_text =
 "in vec2 vPos;\n"
 "in vec2 texcoord;\n"
 "uniform  mat4 resize;\n"
+"uniform  mat4 preview_mirror;\n"
 "out vec3 color;\n"
 "out vec2 Texcoord;\n"
 "void main()\n"
 "{\n"
-"    gl_Position = resize * vec4(vPos, 0.0, 1.0);\n"
+"    gl_Position = preview_mirror * resize * vec4(vPos, 0.0, 1.0);\n"
 "    Texcoord = texcoord;\n"
 "    color = vCol;\n"
 "}\n";
@@ -90,12 +91,12 @@ void start_render_thread(shared_memory_t *shared_memory)
     printf("%sStarted render thread!\n",PR);
     signal(SIGINT, stop_render_thread);
     GLuint textures[NUM_TEXTURES];
-    GLuint program, resize_mat, fragment_shader, vertex_shader, ebo, vbo;
+    GLuint program, resize_mat, preview_mirror_mat, reveal_mirror_mat, fragment_shader, vertex_shader, ebo, vbo;
     GLFWwindow* window;
-    init_render_thread(&window,textures,&program, &resize_mat,&fragment_shader,&vertex_shader,&ebo, &vbo);
+    init_render_thread(&window, textures, &program, &resize_mat, &preview_mirror_mat, &reveal_mirror_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
     renderRunning = 1;
-    run_render_thread(shared_memory, &window,program, resize_mat);
-    cleanup_render_thread(&window,textures,&program, &resize_mat,&fragment_shader,&vertex_shader,&ebo, &vbo);
+    run_render_thread(shared_memory, &window,program, resize_mat, preview_mirror_mat, reveal_mirror_mat);
+    cleanup_render_thread(&window, textures, &program, &resize_mat, &preview_mirror_mat, &reveal_mirror_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
     printf("%sFinished render thread!\n",PR);
 }
 void stop_render_thread(int dummy)
@@ -103,7 +104,7 @@ void stop_render_thread(int dummy)
     renderRunning = 0;
 }
 
-int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat , GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
+int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, GLuint *resize_mat, GLuint *preview_mirror_mat, GLuint *reveal_mirror_mat, GLuint *fragment_shader, GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
 {
     GLint vpos_location, vcol_location;
 
@@ -157,6 +158,8 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glLinkProgram(*program);
 
     *resize_mat = glGetUniformLocation(*program, "resize");
+    *preview_mirror_mat = glGetUniformLocation(*program, "preview_mirror");
+    *reveal_mirror_mat = glGetUniformLocation(*program, "reveal_mirror");
     vpos_location = glGetAttribLocation(*program, "vPos");
     vcol_location = glGetAttribLocation(*program, "vCol");
     GLint texAttrib = glGetAttribLocation(*program, "texcoord");
@@ -201,7 +204,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GL
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program ,GLuint *resize_mat ,GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
+void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program ,GLuint *resize_mat, GLuint *preview_mirror_mat ,GLuint *reveal_mirror_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
 {
     glDeleteTextures(NUM_TEXTURES, textures);
     glDeleteProgram(*program);
@@ -213,10 +216,10 @@ void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program
     glfwTerminate();
 }
 
-void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat)
+void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat, GLuint preview_mirror_mat ,GLuint reveal_mirror_mat)
 {
     const struct timespec sem_timespec = {0,100000};
-    mat4x4 m, p, mvp;
+    mat4x4 m, mirror_preview;
     while (!glfwWindowShouldClose(*window) && renderRunning)
     {
         switch(button_pushed){
@@ -237,42 +240,66 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 if(shared_memory->logic_state == FIRST_STATE){shared_memory->logic_state = LAST_STATE;}
                 else{shared_memory->logic_state--;}
                 break;
+            case 'l':
+                shared_memory->preview_mirror ^= 1;
+                break;
+            case 'm':
+                shared_memory->reveal_mirror ^= 1;
+                break;
             default:
                 break;
         }
+      
+        int width, height;
+        glfwGetFramebufferSize(*window, &width, &height);
+
+        //setup transformation matrix so previeuw is always shown in correct aspect ratio
+        mat4x4_identity(m);
+        float square_hight = (float)PREVIEW_WIDTH / (float)PREVIEW_HEIGHT * (float)height;
+        m[0][0] = (square_hight < width)?((float)PREVIEW_WIDTH*(float)height)/((float)PREVIEW_HEIGHT*(float)width):1.0;
+        m[1][1] = (square_hight >= width)?((float)PREVIEW_HEIGHT*(float)width)/((float)PREVIEW_WIDTH*(float)height):1.0;
+        glViewport(0, 0, width, height);
         
+        mat4x4_identity(mirror_preview);
+        mirror_preview[0][0] = (shared_memory->preview_mirror==1)?(-1):(1);
+
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
-            for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
-                if(shared_memory->preview_buffer[i].pre_state == pre_render){
-                    int width, height;
-                    glfwGetFramebufferSize(*window, &width, &height);
+            if(shared_memory->logic_state != log_reveal  || !shared_memory->photobooth_active){
+                //  -------- PREVIEW LOGIC --------
+                for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
+                    if(shared_memory->preview_buffer[i].pre_state == pre_render){
+                        glActiveTexture(GL_TEXTURE1);
+                        glClear(GL_COLOR_BUFFER_BIT);
+                        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->preview_buffer[i].width, 
+                                    shared_memory->preview_buffer[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
+                                    shared_memory->preview_buffer[i].raw_data);
+                        glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
 
-                    //setup transformation matrix so previeuw is always shown in correct aspect ratio
-                    mat4x4_identity(m);
-                    float square_hight = (float)PREVIEW_WIDTH / (float)PREVIEW_HEIGHT * (float)height;
-                    m[0][0] = (square_hight < width)?((float)PREVIEW_WIDTH*(float)height)/((float)PREVIEW_HEIGHT*(float)width):1.0;
-                    m[1][1] = (square_hight >= width)?((float)PREVIEW_HEIGHT*(float)width)/((float)PREVIEW_WIDTH*(float)height):1.0;
-
-                    glViewport(0, 0, width, height);
-                    glActiveTexture(GL_TEXTURE1);
-                    glClear(GL_COLOR_BUFFER_BIT);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->preview_buffer[i].width, 
-                                shared_memory->preview_buffer[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
-                                shared_memory->preview_buffer[i].raw_data);
-                    glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
-
-                    glActiveTexture(GL_TEXTURE0);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->overlay_buffer.width, 
-                                shared_memory->overlay_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
-                                shared_memory->overlay_buffer.raw_data);
-                    glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
-                    
-                    glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
-                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-                    glfwSwapBuffers(*window);
-                    shared_memory->preview_buffer[i].pre_state = pre_capture;
-                    break;
+                        glActiveTexture(GL_TEXTURE0);
+                        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->overlay_buffer.width, 
+                                    shared_memory->overlay_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
+                                    shared_memory->overlay_buffer.raw_data);
+                        glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
+                        
+                        glUniformMatrix4fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
+                        glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
+                        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                        glfwSwapBuffers(*window);
+                        shared_memory->preview_buffer[i].pre_state = pre_capture;
+                        break;
+                    }
                 }
+            }else{
+                // -------- CAPTURE LOGIC --------
+                glActiveTexture(GL_TEXTURE0);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->capture_buffer.width, 
+                            shared_memory->capture_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
+                            shared_memory->capture_buffer.raw_data);
+                glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
+                
+                glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                glfwSwapBuffers(*window);
             }
         }
         if(button_pushed != 0) button_pushed = 0;
