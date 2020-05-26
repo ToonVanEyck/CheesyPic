@@ -141,8 +141,8 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
         case log_countdown_2:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_2);   break;
         case log_countdown_1:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_1);   break;
         case log_capture:       set_image_overlay(&shared_memory->overlay_buffer,&config->smile);                       break;
-        case log_reveal:                                                                                               break; //the captured image is shown instead of the overlay
-        case log_print:         set_image_overlay(&shared_memory->overlay_buffer,&config->print);                       break;
+        case log_reveal:                                                                                                break; //the captured image is shown instead of the overlay
+        case log_procces:       set_image_overlay(&shared_memory->overlay_buffer,&config->print);                       break;
         default:                                                                                                        break;
     }
 
@@ -205,7 +205,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 if(init_state){
                     setitimer(ITIMER_REAL,&config->preview_time,NULL);
                 }
-                if(alarm_var){
+                if(alarm_var && shared_memory->capture_buffer.jpeg_data == NULL){
                     shared_memory->logic_state = log_triggred;
                     alarm_var = 0;
                 }

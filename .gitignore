@@ -2,3 +2,5 @@
 build/*
 glfw/*
 Simple-OpenGL-Image-Library/*
+overlays/*
+captures/*
