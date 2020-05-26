@@ -263,6 +263,14 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                 #endif
                 shared_memory->logic_state = log_decode;
             }
+            if(shared_memory->logic_state == log_reveal && shared_memory->capture_buffer.jpeg_data){
+                #ifndef NO_CAM
+                    gp_file_free((CameraFile *)shared_memory->capture_buffer.cameraFile); 
+                #else
+                    free((void*)shared_memory->capture_buffer.jpeg_data);
+                #endif
+                shared_memory->capture_buffer.jpeg_data = NULL;
+            }
             sem_post(&shared_memory->sem_decode);
         }
     }

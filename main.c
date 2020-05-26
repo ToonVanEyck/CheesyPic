@@ -67,6 +67,6 @@ int main(int argc, char *argv[])
     sem_destroy(&shared_memory->sem_render);
     sem_destroy(&shared_memory->sem_logic);
 
-    free_config(&config);
+    free_config((void*)&config);
     exit(0);
 }
