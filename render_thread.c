@@ -48,26 +48,30 @@ static const char* vertex_shader_text =
 "in vec2 vPos;\n"
 "in vec2 texcoord;\n"
 "uniform  mat4 resize;\n"
-"uniform  mat4 preview_mirror;\n"
+"uniform  mat2 preview_mirror;\n"
+"uniform  mat2 reveal_mirror;\n"
 "out vec3 color;\n"
-"out vec2 Texcoord;\n"
+"out vec2 tex_preview_coord;\n"
+"out vec2 tex_overlay_coord;\n"
 "void main()\n"
 "{\n"
-"    gl_Position = preview_mirror * resize * vec4(vPos, 0.0, 1.0);\n"
-"    Texcoord = texcoord;\n"
+"    gl_Position = resize * vec4(vPos, 0.0, 1.0);\n"
+"    tex_preview_coord = texcoord * preview_mirror;\n"
+"    tex_overlay_coord = texcoord * reveal_mirror;\n"
 "    color = vCol;\n"
 "}\n";
  
 static const char* fragment_shader_text =
 "#version 140\n"
 "in vec3 color;\n"
-"in vec2 Texcoord;\n"
+"in vec2 tex_preview_coord;\n"
+"in vec2 tex_overlay_coord;\n"
 "out vec4 outColor;\n"
 "uniform sampler2D tex_preview;\n"
 "uniform sampler2D tex_overlay;\n"
 "void main()\n"
 "{\n"
-"   outColor = mix(texture(tex_preview, Texcoord),texture(tex_overlay, Texcoord), texture(tex_overlay, Texcoord).a);\n"
+"   outColor = mix(texture(tex_preview, tex_preview_coord),texture(tex_overlay, tex_overlay_coord), texture(tex_overlay, tex_overlay_coord).a);\n"
 "}\n";
 
 static void error_callback(int error, const char* description)
@@ -186,8 +190,8 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
         // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
     glUniform1i(glGetUniformLocation(*program, "tex_overlay"), 0);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -198,8 +202,8 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
         // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
     glUniform1i(glGetUniformLocation(*program, "tex_preview"), 1);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
@@ -219,7 +223,7 @@ void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program
 void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat, GLuint preview_mirror_mat ,GLuint reveal_mirror_mat)
 {
     const struct timespec sem_timespec = {0,100000};
-    mat4x4 m, mirror_preview;
+    mat4x4 m;
     while (!glfwWindowShouldClose(*window) && renderRunning)
     {
         switch(button_pushed){
@@ -260,7 +264,8 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
         m[1][1] = (square_hight >= width)?((float)PREVIEW_HEIGHT*(float)width)/((float)PREVIEW_WIDTH*(float)height):1.0;
         glViewport(0, 0, width, height);
         
-        mat4x4_identity(mirror_preview);
+        vec2 mirror_preview[2]={{1,0},{0,1}};
+        vec2 mirror_reveal[2]={{1,0},{0,1}};
         mirror_preview[0][0] = (shared_memory->preview_mirror==1)?(-1):(1);
 
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
@@ -281,7 +286,8 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                                     shared_memory->overlay_buffer.raw_data);
                         glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
                         
-                        glUniformMatrix4fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
+                        glUniformMatrix2fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
+                        glUniformMatrix2fv(reveal_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
                         glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
                         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                         glfwSwapBuffers(*window);
@@ -291,12 +297,14 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 }
             }else{
                 // -------- CAPTURE LOGIC --------
+                mirror_reveal[0][0] = (shared_memory->reveal_mirror==1)?(-1):(1);
                 glActiveTexture(GL_TEXTURE0);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->capture_buffer.width, 
                             shared_memory->capture_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
                             shared_memory->capture_buffer.raw_data);
                 glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
-                
+                glUniformMatrix2fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
+                glUniformMatrix2fv(reveal_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
                 glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                 glfwSwapBuffers(*window);
