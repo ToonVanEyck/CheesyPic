@@ -5,6 +5,36 @@
 
 static int captureRunning;
 
+#ifdef NO_CAM
+static unsigned long readJpg(char *name, char **data){
+    FILE *file;
+	unsigned long size;
+    file = fopen(name, "rb");
+    if (!file)
+    {
+        fprintf(stderr, "Unable to open file %s", name);
+        return 1;
+    }
+    
+    //Get file length
+    fseek(file, 0, SEEK_END);
+    size=ftell(file);
+    fseek(file, 0, SEEK_SET);
+    printf("size %ld\n",size);
+    //Allocate memory
+    *data=(char *)malloc(size+1);
+    if (!*data)
+    {
+        fprintf(stderr, "Memory error!");
+        fclose(file);
+        return 1;
+    }
+    fread(*data, size, 1, file);
+    fclose(file);
+    return size;
+}
+#endif
+
 void start_capture_thread(shared_memory_t *shared_memory)
 {
     printf("%sStarted capture thread!\n",PC);
@@ -224,6 +254,12 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                     rc[3] = gp_file_get_data_and_size ((CameraFile *)shared_memory->capture_buffer.cameraFile, &shared_memory->capture_buffer.jpeg_data, &shared_memory->capture_buffer.size);
                     rc[4] = gp_camera_file_delete(*camera, cfp.folder, cfp.name,*ctx);
                     if(rc[0]||rc[0]||rc[0]||rc[3]||rc[4])printf("%s capture rc :[%d] [%d] [%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2],rc[3],rc[4]);
+                #else
+                    static unsigned char capture_cnt = 0;
+                    char capture_path[100]={0};
+                    snprintf(capture_path,100,"../kittens/%d.jpg",capture_cnt%3+1);
+                    shared_memory->capture_buffer.size = readJpg(capture_path, (char **)&shared_memory->capture_buffer.jpeg_data);
+                    capture_cnt++;
                 #endif
                 shared_memory->logic_state = log_decode;
             }
