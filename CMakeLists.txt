@@ -40,3 +40,6 @@ target_link_libraries(render_jpeg OpenGL::GL)
 # SVG PARSER EXAMPLE
 add_executable(svg_parse parse_svg.c)
 target_link_libraries(svg_parse  ${LIBXML2_LIBRARIES})
+
+# PRINTER EXAMPLE
+add_executable(photo_print printer_thread.c)
