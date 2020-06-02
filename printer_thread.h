@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <regex.h>
+#include <json-c/json.h>
 
 #include "shared_memory.h"
 

@@ -20,8 +20,9 @@ find_package(OpenGL REQUIRED)
 find_package(Gphoto2 REQUIRED)
 find_package(TurboJPEG REQUIRED)
 find_package(LibXml2 REQUIRED)
+find_package(JSONC REQUIRED)
 
-include_directories(. ${Gphoto2_INCLUDE_DIRS} ${TurboJPEG_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${LIBXML2_INCLUDE_DIRS})
+include_directories(. ${Gphoto2_INCLUDE_DIRS} ${TurboJPEG_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${LIBXML2_INCLUDE_DIRS} ${JSONC_INCLUDE_DIR})
 
 # PHOTOBOOTH
 add_executable(myapp main.c glad.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c)
@@ -43,3 +44,4 @@ target_link_libraries(svg_parse  ${LIBXML2_LIBRARIES})
 
 # PRINTER EXAMPLE
 add_executable(photo_print printer_thread.c)
+target_link_libraries(photo_print ${JSONC_LIBRARY} )
