@@ -41,6 +41,14 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
     config->reveal_mirror = &shared_memory->reveal_mirror;
     read_config(config);
     if(get_printer_driver_name(&config->printer_driver_name)) return 1;
+    #ifndef NO_PRINT
+        is_printing_finished(config->printer_driver_name,printer_info);
+        if(!printer_info->connected){
+            printf("Error [%s] printer connected.\n",config->printer_driver_name);
+            return 1;
+        } 
+    #endif
+    return 0;
 }
 
 int load_png_image(overlay_t *overlay)
@@ -261,9 +269,13 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                         fclose(source);
                         fclose(target);
                 }
-                shared_memory->logic_state = log_print;
+                #ifdef NO_PRINT
+                    shared_memory->logic_state = log_idle;
+                #else
+                    shared_memory->logic_state = log_print;
+                #endif
                 break;
-                
+
             case log_print:
                 if(init_state){
                     print_file("print_me.jpg");

@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
     }
     //cleanup code
     sleep(1);
-cleanup:
     printf("\033[0mKilling all threads\n");
     //kill other threads
     if(capture_pid)kill(capture_pid,SIGINT);
@@ -69,6 +68,7 @@ cleanup:
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
     }
+cleanup:
     //destroy semaphores
     sem_destroy(&shared_memory->sem_decode);
     sem_destroy(&shared_memory->sem_render);
