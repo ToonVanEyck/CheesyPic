@@ -128,6 +128,12 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
         printf("%smirror reveal:  [%s]\n",PL,shared_memory->reveal_mirror?"YES":"NO");
     }
 
+    static int prev_fastmode = 2;
+    if(prev_fastmode != shared_memory->fastmode){
+        prev_fastmode = shared_memory->fastmode;
+        printf("%sfast mode:      [%s]\n",PL,shared_memory->fastmode?"YES":"NO");        
+    }
+
     if(init_state){
         prev_logic_state = shared_memory->logic_state;
         printf("%sEntered %s state!\n",PL,get_state_name(prev_logic_state));
@@ -146,6 +152,8 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
         default:                                                                                                        break;
     }
 
+    struct itimerval fast_time = {{0,0},{0,100000}};
+
     if(shared_memory->photobooth_active){
         switch (shared_memory->logic_state){
             case log_idle:
@@ -163,7 +171,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_3:
                 if(init_state){
-                    setitimer(ITIMER_REAL,&config->countdown.data.image.delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown.data.image.delay,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_countdown_2;
@@ -173,7 +181,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_2:
                 if(init_state){
-                    setitimer(ITIMER_REAL,&config->countdown.data.image.delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown.data.image.delay,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_countdown_1;
@@ -182,7 +190,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_1:
                 if(init_state){
-                    setitimer(ITIMER_REAL,&config->countdown.data.image.delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown.data.image.delay,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_capture;
@@ -203,13 +211,37 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
             case log_reveal:
                 // handled in decode thread
                 if(init_state){
-                    setitimer(ITIMER_REAL,&config->preview_time,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->preview_time,NULL);
                 }
                 if(alarm_var && shared_memory->capture_buffer.jpeg_data == NULL){
                     shared_memory->logic_state = log_triggred;
                     alarm_var = 0;
                 }
                 break;
+
+            case log_procces:
+                if(init_state){
+                        FILE *source, *target;
+                        source = fopen("../kittens/2.jpg", "r");
+                        if( source == NULL )
+                        {
+                            printf("Failed to open src file...\n");
+                            break;
+                        }
+                        target = fopen("print_me.jpg", "w+");
+                        if( target == NULL )
+                        {
+                            fclose(source);
+                            printf("Failed to open dest file...\n");
+                            break;
+                        }
+                        char ch;
+                        while( ( ch = fgetc(source) ) != EOF )
+                            fputc(ch, target);
+                        printf("File copied successfully.\n");
+                        fclose(source);
+                        fclose(target);
+                }
 
             case log_print:
                 if(init_state){

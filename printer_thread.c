@@ -185,7 +185,7 @@ void run_printer_thread(shared_memory_t *shared_memory)
     int busy = 0;
     do{
         busy = 0;
-        sleep(1);
+        sleep(7);
         get_printer_stats(pdn,&printer_info);
         printf("%s & %s\n",printer_info.deck[0].status?"Printing":"Idle",printer_info.deck[1].status?"Printing":"Idle");
         for(int i = 0; i<2;i++){
@@ -211,16 +211,6 @@ void run_printer_thread(shared_memory_t *shared_memory)
     // }
 
     free(pdn);
-
-    //     fp = popen("BACKEND_STATS_ONLY=1 BACKEND=mitsu70x /usr/lib/cups/backend/gutenprint53+usb -s", "r");
-    //     if (fp == NULL){
-    //         fprintf(stderr,"failed to get printer stats\n");
-    //     }else{
-    //         fread (buffer, 1, MAX_LEN, fp);
-    //         pclose(fp);
-    //     }
-
-    //     regex_t regex;
 }
 
 void main(int argc, char *argv[])

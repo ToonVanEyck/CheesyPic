@@ -65,6 +65,7 @@ typedef struct photobooth_session{
     unsigned char **raw_captures; // array of char pointers
 }photobooth_session_t; 
 
+
 int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session);
 int load_png_image(overlay_t *overlay);
 void free_config(photobooth_config_t *config);

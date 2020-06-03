@@ -19,3 +19,4 @@ commands:
 '+'/'-' cycle states
 'l'     toggle mirror liveview
 'm'     toggle mirror reveal
+'f'     toggle fast mode

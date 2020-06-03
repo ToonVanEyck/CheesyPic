@@ -250,6 +250,9 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
             case 'm':
                 shared_memory->reveal_mirror ^= 1;
                 break;
+            case 'f':
+                shared_memory->fastmode ^= 1;
+                break;
             default:
                 break;
         }

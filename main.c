@@ -19,6 +19,10 @@ int main(int argc, char *argv[])
     sem_init(&shared_memory->sem_render,1,0);
     sem_init(&shared_memory->sem_logic,1,0);
     shared_memory->photobooth_active = 1;
+    shared_memory->fastmode = 0;
+    #ifdef FAST_MODE
+        shared_memory->fastmode = 1;
+    #endif
     photobooth_config_t config;
     photobooth_session_t session;
     init_logic(shared_memory, &config, &session);

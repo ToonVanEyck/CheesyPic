@@ -61,6 +61,7 @@ typedef struct{
 
 typedef struct{
     unsigned char photobooth_active;
+    unsigned char fastmode;
     unsigned char preview_mirror;
     unsigned char reveal_mirror;
     sem_t sem_decode;
