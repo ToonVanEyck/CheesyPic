@@ -26,15 +26,21 @@ char* get_state_name(logic_state_t i)
     return "UNDEFINED";
 }
 
-int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session)
+int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info)
 {
     signal(SIGALRM, alarm_capture);
+
+    printer_info->nuf_of_decks = 2;
+    printer_info->deck = malloc(printer_info->nuf_of_decks * sizeof(deck_info_t));
+    memset(printer_info->deck,0,printer_info->nuf_of_decks * sizeof(deck_info_t));
+
     alarm_var = 0;
     memset(config,0,sizeof(photobooth_config_t));
     memset(session,0,sizeof(photobooth_session_t));
     config->preview_mirror = &shared_memory->preview_mirror;
     config->reveal_mirror = &shared_memory->reveal_mirror;
     read_config(config);
+    if(get_printer_driver_name(&config->printer_driver_name)) return 1;
 }
 
 int load_png_image(overlay_t *overlay)
@@ -54,8 +60,9 @@ int load_png_image(overlay_t *overlay)
     return error;
 }
 
-void free_config(photobooth_config_t *config)
+void free_logic(photobooth_config_t *config, printer_info_t *printer_info)
 {
+    //config
     free(config->countdown.data.image.cd_3.data);
     config->countdown.data.image.cd_3.data = NULL;
     free(config->countdown.data.image.cd_2.data);
@@ -68,6 +75,13 @@ void free_config(photobooth_config_t *config)
     config->print.data = NULL;
     free(config->smile.data);
     config->smile.data = NULL;
+    if(config->printer_driver_name){
+        free(config->printer_driver_name);
+        config->printer_driver_name = NULL;
+    }
+    //printer_info
+    free(printer_info->deck);
+    printer_info->deck = NULL;
 }
 
 int read_config(photobooth_config_t *config)
@@ -105,7 +119,7 @@ void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
     memcpy(&dest->raw_data,src->data,src->width*src->height*4);
 }
 
-void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photobooth_session_t *session)
+void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info)
 {
     static logic_state_t prev_logic_state = -1;
     int init_state = (prev_logic_state != shared_memory->logic_state);
@@ -222,31 +236,39 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
             case log_procces:
                 if(init_state){
                         FILE *source, *target;
-                        source = fopen("../kittens/2.jpg", "r");
+                        source = fopen("../kittens/2.jpg", "rb");
                         if( source == NULL )
                         {
                             printf("Failed to open src file...\n");
                             break;
                         }
-                        target = fopen("print_me.jpg", "w+");
+                        target = fopen("print_me.jpg", "wb+");
                         if( target == NULL )
                         {
                             fclose(source);
                             printf("Failed to open dest file...\n");
                             break;
                         }
-                        char ch;
-                        while( ( ch = fgetc(source) ) != EOF )
-                            fputc(ch, target);
+                        size_t n, m;
+                        unsigned char buff[8192];
+                        do {
+                            n = fread(buff, 1, sizeof buff, source);
+                            if (n) m = fwrite(buff, 1, n, target);
+                            else   m = 0;
+                        } while ((n > 0) && (n == m));
+                        if (m) perror("copy");
                         printf("File copied successfully.\n");
                         fclose(source);
                         fclose(target);
                 }
-
+                shared_memory->logic_state = log_print;
+                break;
+                
             case log_print:
                 if(init_state){
+                    print_file("print_me.jpg");
                 }
-
+                if(is_printing_finished(config->printer_driver_name,printer_info)) shared_memory->logic_state = log_idle;
                 break;
 
             default:

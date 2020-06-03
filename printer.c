@@ -1,47 +1,4 @@
-#include "printer_thread.h"
-
-static int printerRunning;
-
-void *start_printer_thread(void *shared_memory)
-{
-    printf("%sStarted printer thread!\n",PP);
-    init_printer_thread();
-    printerRunning = 1;
-    run_printer_thread(shared_memory);
-    printf("%sFinished printer thread!\n",PP);
-}
-
-void stop_printer_thread()
-{
-    printerRunning = 0;
-}
-
-int init_printer_thread()
-{
-
-}
-
-
-typedef enum{
-    Idle,
-    Printing,
-}printing_status_t;
-
-typedef struct{
-    char name[16];
-    printing_status_t status;
-    unsigned int media_max;
-    unsigned int media_remaining;
-    unsigned int lifetime_prints;
-}deck_info_t;
-
-typedef struct{
-    unsigned int connected;
-    unsigned int nuf_of_decks;
-    deck_info_t *deck;
-}printer_info_t;
-
-#define MAX_LEN 1024
+#include "printer.h"
 
 int get_printer_driver_name(char **name)
 {
@@ -101,7 +58,6 @@ int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info)
             return 1;
         }else if(strstr(buffer,"No matching printers found")){
             printer_info->connected = 0;
-            fprintf(stderr,"Printer not connected!\n");
             return 1;
         }else{
             printer_info->connected = 1;
@@ -110,7 +66,6 @@ int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info)
             json_object_object_get_ex(printer_stats,"decks",&deck_list);
             int deck_cnt = 0;
             json_object_object_foreach(deck_list, deck_name, deck) {
-                
                 strncpy(printer_info->deck[deck_cnt].name,deck_name,15);
                 json_object *temp;
                 if(json_object_object_get_ex(deck,"status",&temp)){
@@ -164,56 +119,52 @@ int print_file(const char *file)
     return 0;
 }
 
-void run_printer_thread(shared_memory_t *shared_memory)
+int is_printing_finished(char *driver_name, printer_info_t *printer_info)
 {
-    int ret = 0;
-    FILE *fp;
-    int length;
-
-    printer_info_t printer_info;
-    printer_info.nuf_of_decks = 2;
-    printer_info.deck = malloc(printer_info.nuf_of_decks * sizeof(deck_info_t));
-    memset(printer_info.deck,0,printer_info.nuf_of_decks * sizeof(deck_info_t));
-
-    char *pdn;
-    get_printer_driver_name(&pdn);
-    printf("driver: %s\n",pdn);
-    get_printer_stats(pdn,&printer_info);
-    if(printer_info.connected){
-        print_file("../kittens/3.jpg");
+    static time_t prev_time = 0;
+    static printing_status_t curr_status = Idle;
+    time_t now;
+    time(&now);
+    if(difftime(now,prev_time) > 1.25){
+        prev_time = now;
+        if(!get_printer_stats(driver_name,printer_info)){
+            if(curr_status == Idle){
+                int busy = 1;
+                for(int i = 0 ; i < printer_info->nuf_of_decks ; i++){
+                    busy &= (printer_info->deck[i].status == Idle);
+                }
+                if(busy) return 0;
+                curr_status = Printing;
+            }
+            if(curr_status == Printing){
+                int busy=0;
+                for(int i = 0 ; i < printer_info->nuf_of_decks ; i++){
+                    busy |= (printer_info->deck[i].status == Printing);
+                }
+                if(busy) return 0;
+                curr_status = Idle;
+            }
+            return 1;
+        }
     }
-    int busy = 0;
-    do{
-        busy = 0;
-        sleep(7);
-        get_printer_stats(pdn,&printer_info);
-        printf("%s & %s\n",printer_info.deck[0].status?"Printing":"Idle",printer_info.deck[1].status?"Printing":"Idle");
-        for(int i = 0; i<2;i++){
-            busy &= (printer_info.deck[i].status == Idle);
-        }
-    }while(busy);
-    printf("print started\n");
-    do{
-        busy = 0;
-        sleep(1);
-        get_printer_stats(pdn,&printer_info);
-        printf("%s & %s\n",printer_info.deck[0].status?"Printing":"Idle",printer_info.deck[1].status?"Printing":"Idle");
-        for(int i = 0; i<2;i++){
-            busy |= (printer_info.deck[i].status == Printing);
-        }
-    }while(busy);
-    printf("print finished\n");
-    // for(int i = 0; i<printer_info.nuf_of_decks;i++){
-    //     printf("%s Deck:\n",printer_info.deck[i].name);
-    //     printf("    Status:           %s\n",printer_info.deck[i].status?"Printing":"Idle");
-    //     printf("    prints remaining: %d / %d\n",printer_info.deck[i].media_remaining,printer_info.deck[i].media_max);
-    //     printf("    lifetime prints : %d\n",printer_info.deck[i].lifetime_prints);
-    // }
-
-    free(pdn);
+    return 0; 
 }
 
-void main(int argc, char *argv[])
-{
-    run_printer_thread(NULL);
-}
+// void main(int argc, char *argv[])
+// {
+//     printer_info_t printer_info;
+//     printer_info.nuf_of_decks = 2;
+//     printer_info.deck = malloc(printer_info.nuf_of_decks * sizeof(deck_info_t));
+//     memset(printer_info.deck,0,printer_info.nuf_of_decks * sizeof(deck_info_t));
+
+//     char *pdn;
+//     get_printer_driver_name(&pdn);
+//     printf("driver: %s\n",pdn);
+//     get_printer_stats(pdn,&printer_info);
+//     if(printer_info.connected){
+//         print_file("print_me.jpg");
+//         while(!is_printing_finished(pdn,&printer_info));
+//     }
+//     printf("print finished\n");
+//     free(pdn);
+// }

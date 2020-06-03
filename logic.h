@@ -9,6 +9,7 @@
 
 #include "shared_memory.h"
 #include "lodepng.h"
+#include "printer.h"
 
 
 #define PL "\033[0;32m"
@@ -56,6 +57,7 @@ typedef struct{
     struct itimerval preview_time;
     unsigned char *preview_mirror;
     unsigned char *reveal_mirror;
+    char *printer_driver_name;
 }photobooth_config_t;
 
 
@@ -66,10 +68,10 @@ typedef struct photobooth_session{
 }photobooth_session_t; 
 
 
-int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session);
+int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info);
 int load_png_image(overlay_t *overlay);
-void free_config(photobooth_config_t *config);
+void free_logic(photobooth_config_t *config, printer_info_t *printer_info);
 int read_config(photobooth_config_t *config);
-void run_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session);
+void run_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info);
 
 #endif

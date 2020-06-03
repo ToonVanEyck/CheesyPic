@@ -23,9 +23,11 @@ int main(int argc, char *argv[])
     #ifdef FAST_MODE
         shared_memory->fastmode = 1;
     #endif
+    // initialise printer data
+    printer_info_t printer_info;
     photobooth_config_t config;
     photobooth_session_t session;
-    init_logic(shared_memory, &config, &session);
+    if(init_logic(shared_memory, &config, &session, &printer_info)) goto cleanup;
     // start threads
     pid_t capture_pid = fork();
     printf("capture_pid %d -- %d\n",capture_pid,getpid());
@@ -43,7 +45,7 @@ int main(int argc, char *argv[])
     int status = 0;
     int c = 0;
     
-    const struct timespec sem_timespec = {0,100000};
+    const struct timespec sem_timespec = {0,250000};
     while(capture_pid && render_pid){
         sem_timedwait(&shared_memory->sem_logic,&sem_timespec);
         // check if a proccess has died.
@@ -51,10 +53,11 @@ int main(int argc, char *argv[])
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
         // execute photobooth logic
-        run_logic(shared_memory,&config, &session);
+        run_logic(shared_memory,&config, &session, &printer_info);
     }
     //cleanup code
     sleep(1);
+cleanup:
     printf("\033[0mKilling all threads\n");
     //kill other threads
     if(capture_pid)kill(capture_pid,SIGINT);
@@ -71,6 +74,6 @@ int main(int argc, char *argv[])
     sem_destroy(&shared_memory->sem_render);
     sem_destroy(&shared_memory->sem_logic);
 
-    free_config((void*)&config);
+    free_logic((void*)&config, &printer_info);
     exit(0);
 }
