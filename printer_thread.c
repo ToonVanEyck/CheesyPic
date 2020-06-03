@@ -36,6 +36,7 @@ typedef struct{
 }deck_info_t;
 
 typedef struct{
+    unsigned int connected;
     unsigned int nuf_of_decks;
     deck_info_t *deck;
 }printer_info_t;
@@ -94,33 +95,48 @@ int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info)
     }
     memset(buffer,0,1024);
     fread (buffer, 1, MAX_LEN, gp);
-    pclose(gp);
-
-    json_object *printer_stats = json_tokener_parse(buffer);
-    json_object *deck_list;
-    json_object_object_get_ex(printer_stats,"decks",&deck_list);
-    int deck_cnt = 0;
-    json_object_object_foreach(deck_list, deck_name, deck) {
-        
-        strncpy(printer_info->deck[deck_cnt].name,deck_name,15);
-        json_object *temp;
-        if(json_object_object_get_ex(deck,"status",&temp)){
-            printer_info->deck[deck_cnt].status = strcmp(json_object_get_string(temp),"Idle")?Printing:Idle;
-        }
-        if(json_object_object_get_ex(deck,"medialevelnow",&temp)){
-            printer_info->deck[deck_cnt].media_remaining = json_object_get_int(temp);
-        }
-        if(json_object_object_get_ex(deck,"medialevelmax",&temp)){
-            printer_info->deck[deck_cnt].media_max = json_object_get_int(temp);
-        }
-        if(json_object_object_get_ex(deck,"counters",&temp)){
-            json_object *temp_temp;
-            if(json_object_object_get_ex(temp,"lifetime",&temp_temp)){
-                printer_info->deck[deck_cnt].lifetime_prints = json_object_get_int(temp_temp);
+    if(feof(gp)){
+        if(strstr(buffer,"Permission denied")){
+            fprintf(stderr,"Please make sure user has permission to execute (555 or 755) \"/usr/lib/cups/backend/gutenprint53+usb\"\n");
+            return 1;
+        }else if(strstr(buffer,"No matching printers found")){
+            printer_info->connected = 0;
+            fprintf(stderr,"Printer not connected!\n");
+            return 1;
+        }else{
+            printer_info->connected = 1;
+            json_object *printer_stats = json_tokener_parse(buffer);
+            json_object *deck_list;
+            json_object_object_get_ex(printer_stats,"decks",&deck_list);
+            int deck_cnt = 0;
+            json_object_object_foreach(deck_list, deck_name, deck) {
+                
+                strncpy(printer_info->deck[deck_cnt].name,deck_name,15);
+                json_object *temp;
+                if(json_object_object_get_ex(deck,"status",&temp)){
+                    printer_info->deck[deck_cnt].status = strcmp(json_object_get_string(temp),"Idle")?Printing:Idle;
+                }
+                if(json_object_object_get_ex(deck,"medialevelnow",&temp)){
+                    printer_info->deck[deck_cnt].media_remaining = json_object_get_int(temp);
+                }
+                if(json_object_object_get_ex(deck,"medialevelmax",&temp)){
+                    printer_info->deck[deck_cnt].media_max = json_object_get_int(temp);
+                }
+                if(json_object_object_get_ex(deck,"counters",&temp)){
+                    json_object *temp_temp;
+                    if(json_object_object_get_ex(temp,"lifetime",&temp_temp)){
+                        printer_info->deck[deck_cnt].lifetime_prints = json_object_get_int(temp_temp);
+                    }
+                }
+                if(++deck_cnt == printer_info->nuf_of_decks) break;
             }
         }
-        if(++deck_cnt == printer_info->nuf_of_decks) break;
+    }else{
+        fprintf(stderr,"error reading backend\n");
+        return 1;
     }
+    pclose(gp);
+    
     return 0;
 }
 
@@ -133,6 +149,19 @@ int get_printer_stats(char *driver_name, printer_info_t *printer_info)
     if(!strcmp(driver_name,"mitsubishi-d70dw")){
         return get_printer_stats_from_json(driver_name, printer_info);
     }
+}
+
+int print_file(const char *file)
+{
+    char buffer[1024]= {0};
+    sprintf(buffer,"lp %s",file);
+    FILE *lp = popen(buffer, "r");
+    if (lp == NULL){
+        fprintf(stderr,"failed to get printer stats\n");
+        return 1;
+    }
+    pclose(lp);
+    return 0;
 }
 
 void run_printer_thread(shared_memory_t *shared_memory)
@@ -150,12 +179,36 @@ void run_printer_thread(shared_memory_t *shared_memory)
     get_printer_driver_name(&pdn);
     printf("driver: %s\n",pdn);
     get_printer_stats(pdn,&printer_info);
-    for(int i = 0; i<printer_info.nuf_of_decks;i++){
-        printf("%s Deck:\n",printer_info.deck[i].name);
-        printf("    Status:           %s\n",printer_info.deck[i].status?"Printing":"Idle");
-        printf("    prints remaining: %d / %d\n",printer_info.deck[i].media_remaining,printer_info.deck[i].media_max);
-        printf("    lifetime prints : %d\n",printer_info.deck[i].lifetime_prints);
+    if(printer_info.connected){
+        print_file("../kittens/3.jpg");
     }
+    int busy = 0;
+    do{
+        busy = 0;
+        sleep(1);
+        get_printer_stats(pdn,&printer_info);
+        printf("%s & %s\n",printer_info.deck[0].status?"Printing":"Idle",printer_info.deck[1].status?"Printing":"Idle");
+        for(int i = 0; i<2;i++){
+            busy &= (printer_info.deck[i].status == Idle);
+        }
+    }while(busy);
+    printf("print started\n");
+    do{
+        busy = 0;
+        sleep(1);
+        get_printer_stats(pdn,&printer_info);
+        printf("%s & %s\n",printer_info.deck[0].status?"Printing":"Idle",printer_info.deck[1].status?"Printing":"Idle");
+        for(int i = 0; i<2;i++){
+            busy |= (printer_info.deck[i].status == Printing);
+        }
+    }while(busy);
+    printf("print finished\n");
+    // for(int i = 0; i<printer_info.nuf_of_decks;i++){
+    //     printf("%s Deck:\n",printer_info.deck[i].name);
+    //     printf("    Status:           %s\n",printer_info.deck[i].status?"Printing":"Idle");
+    //     printf("    prints remaining: %d / %d\n",printer_info.deck[i].media_remaining,printer_info.deck[i].media_max);
+    //     printf("    lifetime prints : %d\n",printer_info.deck[i].lifetime_prints);
+    // }
 
     free(pdn);
 
