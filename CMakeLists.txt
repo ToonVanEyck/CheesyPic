@@ -22,9 +22,19 @@ find_package(OpenGL REQUIRED)
 find_package(Gphoto2 REQUIRED)
 find_package(TurboJPEG REQUIRED)
 find_package(LibXml2 REQUIRED)
-find_package(JSONC REQUIRED)
 
-include_directories(. ${Gphoto2_INCLUDE_DIRS} ${TurboJPEG_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${LIBXML2_INCLUDE_DIRS} ${JSONC_INCLUDE_DIR})
+find_package(Glib REQUIRED)
+find_package(JSONC REQUIRED)
+find_package(LibRSVG REQUIRED)
+
+include_directories(. 
+    ${Gphoto2_INCLUDE_DIRS} 
+    ${TurboJPEG_INCLUDE_DIRS} 
+    ${LIBXML2_INCLUDE_DIR} 
+    ${LIBXML2_INCLUDE_DIRS} 
+    ${Glib_INCLUDE_DIRS}
+    ${JSONC_INCLUDE_DIR} 
+    ${LibRSVG_INCLUDE_DIR})
 
 # PHOTOBOOTH
 add_executable(myapp main.c glad.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c)
@@ -44,3 +54,7 @@ target_link_libraries(render_jpeg OpenGL::GL)
 # SVG PARSER EXAMPLE
 add_executable(svg_parse parse_svg.c)
 target_link_libraries(svg_parse  ${LIBXML2_LIBRARIES})
+
+# SVG RENDER EXAMPLE
+add_executable(svg_render svg_to_png.c)
+target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
