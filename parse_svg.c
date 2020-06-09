@@ -145,7 +145,6 @@ int get_photo_locations_from_design(const char * svg_file,photo_locations_t *pho
                 }
             }
         }
-        print_photo_location(&photo_locations->photo_location[i]);
     }
 	xmlFreeDoc(doc);
     return photo_locations->total_photos;
