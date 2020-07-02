@@ -8,6 +8,7 @@
 #include <signal.h>
 
 #include "shared_memory.h"
+#include "design.h"
 #include "lodepng.h"
 #include "printer.h"
 
@@ -49,7 +50,6 @@ typedef struct{
 }countdown_t;
 
 typedef struct{
-    unsigned num_photos_in_design;
     countdown_t countdown;
     overlay_t idle;
     overlay_t smile;
@@ -58,13 +58,15 @@ typedef struct{
     unsigned char *preview_mirror;
     unsigned char *reveal_mirror;
     char *printer_driver_name;
+    design_t design;
 }photobooth_config_t;
 
 
 typedef struct photobooth_session{
     unsigned photo_counter;
     unsigned char *current_jpg;
-    unsigned char **raw_captures; // array of char pointers
+    unsigned char **capture_data; // array of char pointers
+    // unsigned char design_svg_data;
 }photobooth_session_t; 
 
 

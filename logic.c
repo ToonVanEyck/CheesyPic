@@ -104,7 +104,7 @@ int read_config(photobooth_config_t *config)
 
     config->countdown.data.image.delay.it_value.tv_sec = 1;
 
-    config->num_photos_in_design = 3;
+    //config->num_photos_in_design = 3;
     
     //load png resources
     if(load_png_image(&config->countdown.data.image.cd_3)) return -1;
@@ -184,7 +184,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_triggred:
                 if(init_state){
-                    if(session->photo_counter < config->num_photos_in_design){
+                    if(session->photo_counter < config->design.total_photos){
                         shared_memory->logic_state = log_countdown_3;
                     }else{
                          shared_memory->logic_state = log_procces;
@@ -223,7 +223,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
             case log_capture:
                 // handled in capture thread
                 if(init_state){
-                    printf("%scaptured %d/%d photos.\n",PL,session->photo_counter+1,config->num_photos_in_design);
+                    printf("%scaptured %d/%d photos.\n",PL,session->photo_counter+1,config->design.total_photos);
                     session->photo_counter++;
                 }
                 break;

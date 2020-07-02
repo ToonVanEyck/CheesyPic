@@ -7,7 +7,7 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 
 add_definitions(-DNO_CAM)
-# add_definitions(-DNO_PRINT)
+add_definitions(-DNO_PRINT)
 add_definitions(-DFAST_MODE)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
@@ -26,6 +26,12 @@ find_package(JSONC REQUIRED)
 find_package(Glib REQUIRED)
 find_package(LibRSVG REQUIRED)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GTK REQUIRED gtk+-3.0)
+include_directories(${GTK_INCLUDE_DIRS})
+link_directories(${GTK_LIBRARY_DIRS})
+add_definitions(${GTK_CFLAGS_OTHER})
+
 include_directories(. 
     ${Gphoto2_INCLUDE_DIRS} 
     ${TurboJPEG_INCLUDE_DIRS} 
@@ -38,10 +44,13 @@ include_directories(.
     ${Cairo_INCLUDE_DIR})
 
 # PHOTOBOOTH
-add_executable(myapp main.c glad.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c)
+add_executable(myapp main.c glad.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c design.c)
 target_link_libraries(myapp ${Gphoto2_LIBRARIES})
 target_link_libraries(myapp ${TurboJPEG_LIBRARIES})
 target_link_libraries(myapp ${JSONC_LIBRARY} )
+target_link_libraries(myapp ${LIBXML2_LIBRARIES})
+target_link_libraries(myapp ${LibRSVG_LIBRARIES})
+target_link_libraries(myapp ${GTK_LIBRARIES})
 target_link_libraries(myapp glfw)
 target_link_libraries(myapp OpenGL::GL)
 
@@ -53,6 +62,7 @@ target_link_libraries(render_jpeg glfw)
 target_link_libraries(render_jpeg OpenGL::GL)
 
 # SVG RENDER EXAMPLE
-add_executable(svg_render svg_to_png.c parse_svg.c lodepng.c)
+add_executable(svg_render svg_to_png.c design.c lodepng.c)
+target_link_libraries(svg_render ${GTK_LIBRARIES})
 target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
 target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
