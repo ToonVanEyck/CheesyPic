@@ -56,7 +56,7 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
     read_config(config);
     session->capture_data = malloc(sizeof(char *)*config->design.total_photos);
     if(session->capture_data == NULL){
-        printf("Error couldn't allocate memory for session");
+        printf("Error couldn't allocate memory for session\n");
         return 1;
     }
     if(get_printer_driver_name(&config->printer_driver_name)) return 1;
