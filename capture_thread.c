@@ -5,7 +5,7 @@
 
 static int captureRunning;
 
-static unsigned long readJpg(char *name, char **data){
+static unsigned long readJpg(char *name, char *data){
     FILE *file;
 	unsigned long size;
     file = fopen(name, "rb");
@@ -19,33 +19,33 @@ static unsigned long readJpg(char *name, char **data){
     fseek(file, 0, SEEK_END);
     size=ftell(file);
     fseek(file, 0, SEEK_SET);
-    printf("size %ld\n",size);
+    //printf("%s %s has size %ld\n",PC,name,size);
     //Allocate memory
-    *data=(char *)malloc(size+1);
-    if (!*data)
-    {
-        fprintf(stderr, "Memory error!");
-        fclose(file);
-        return 1;
-    }
-    fread(*data, size, 1, file);
+    //*data=(char *)malloc(size+1);
+    // if (!*data)
+    // {
+    //     fprintf(stderr, "Memory error!");
+    //     fclose(file);
+    //     return 1;
+    // }
+    fread(data, size, 1, file);
     fclose(file);
     return size;
 }
 
-static unsigned long writeJpg(char *name, const char **data, unsigned long size){
-    FILE *file;
-    file = fopen(name, "wb");
-    if (!file)
-    {
-        fprintf(stderr, "Unable to open file %s", name);
-        return 1;
-    }
+// static unsigned long writeJpg(char *name, const char **data, unsigned long size){
+//     FILE *file;
+//     file = fopen(name, "wb");
+//     if (!file)
+//     {
+//         fprintf(stderr, "Unable to open file %s", name);
+//         return 1;
+//     }
     
-    fwrite(*data, size, 1, file);
-    fclose(file);
-    return size;
-}
+//     fwrite(*data, size, 1, file);
+//     fclose(file);
+//     return size;
+// }
 
 void start_capture_thread(shared_memory_t *shared_memory)
 {
@@ -243,7 +243,7 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                                 int rc[3]={0};
                                 rc[0] = gp_file_new ((CameraFile **)&shared_memory->preview_buffer[i].cameraFile);
                                 rc[1] = gp_camera_capture_preview (*camera, (CameraFile *)shared_memory->preview_buffer[i].cameraFile, *ctx);
-                                rc[2] = gp_file_get_data_and_size ((CameraFile *)shared_memory->preview_buffer[i].cameraFile, &(shared_memory->preview_buffer[i].jpeg_data),&(shared_memory->preview_buffer[i].size));
+                                rc[2] = gp_file_get_data_and_size ((CameraFile *)shared_memory->preview_buffer[i].cameraFile, &(shared_memory->preview_buffer[i].gp_jpeg_data),&(shared_memory->preview_buffer[i].size));
                                 if(rc[0]||rc[1]||rc[2])printf("%s preview rc :[%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2]);
                             #endif
                             shared_memory->preview_buffer[i].pre_state = pre_decode;
@@ -257,36 +257,37 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                 }
             }else{
                 // -------- CAPTURE LOGIC --------
-                #ifndef NO_CAM
-                    int rc[5]={0};
-                    CameraFilePath cfp;
-                    rc[0] = gp_camera_capture(*camera,GP_CAPTURE_IMAGE ,&cfp,*ctx);
-                    rc[1] = gp_file_new((CameraFile **)&shared_memory->capture_buffer.cameraFile);
-                    rc[2] = gp_camera_file_get(*camera, cfp.folder, cfp.name,GP_FILE_TYPE_NORMAL, (CameraFile *)shared_memory->capture_buffer.cameraFile, *ctx);
-                    rc[3] = gp_file_get_data_and_size ((CameraFile *)shared_memory->capture_buffer.cameraFile, &shared_memory->capture_buffer.jpeg_data, &shared_memory->capture_buffer.size);
-                    rc[4] = gp_camera_file_delete(*camera, cfp.folder, cfp.name,*ctx);
-                    if(rc[0]||rc[0]||rc[0]||rc[3]||rc[4])printf("%s capture rc :[%d] [%d] [%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2],rc[3],rc[4]);
-                #else
+                #ifdef NO_CAM
                     static unsigned char load_capture_cnt = 0;
                     char capture_path[100]={0};
                     snprintf(capture_path,100,"../kittens/%d.jpg",load_capture_cnt%3+1);
-                    shared_memory->capture_buffer.size = readJpg(capture_path, (char **)&shared_memory->capture_buffer.jpeg_data);
+                    shared_memory->capture_buffer.size = readJpg(capture_path, (char *)shared_memory->capture_buffer.jpeg_buffer);
                     load_capture_cnt++;
+                #else
+                    int rc[5]={0};
+                    CameraFilePath cfp;
+                    //shared_memory->capture_buffer.size = 0;
+                    rc[0] = gp_camera_capture(*camera,GP_CAPTURE_IMAGE ,&cfp,*ctx);
+                    rc[1] = gp_file_new((CameraFile **)&shared_memory->capture_buffer.cameraFile);
+                    rc[2] = gp_camera_file_get(*camera, cfp.folder, cfp.name,GP_FILE_TYPE_NORMAL, (CameraFile *)shared_memory->capture_buffer.cameraFile, *ctx);
+                    rc[3] = gp_file_get_data_and_size ((CameraFile *)shared_memory->capture_buffer.cameraFile, &shared_memory->capture_buffer.gp_jpeg_data, &shared_memory->capture_buffer.size);                    printf("%s%s has size %ld\n",PC,"capture",shared_memory->capture_buffer.size);
+                     rc[4] = gp_camera_file_delete(*camera, cfp.folder, cfp.name,*ctx);
+                    if(rc[0]||rc[0]||rc[0]||rc[3]||rc[4]){
+                        printf("%s capture rc :[%d] [%d] [%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2],rc[3],rc[4]);
+                        exit(1);
+                    }
+                    memcpy(shared_memory->capture_buffer.jpeg_buffer,shared_memory->capture_buffer.gp_jpeg_data,shared_memory->capture_buffer.size);
+                    gp_file_free((CameraFile *)shared_memory->capture_buffer.cameraFile); 
                 #endif
                 shared_memory->logic_state = log_decode;
             }
-            if(shared_memory->logic_state == log_reveal && shared_memory->capture_buffer.jpeg_data){
-                static unsigned char save_capture_cnt = 0;
-                char capture_path[100]={0};
-                snprintf(capture_path,100,"../captures/%d.jpg",save_capture_cnt%3+1);
-                writeJpg(capture_path,&shared_memory->capture_buffer.jpeg_data,shared_memory->capture_buffer.size);
-                save_capture_cnt++;
-                #ifndef NO_CAM
-                    gp_file_free((CameraFile *)shared_memory->capture_buffer.cameraFile); 
+            if(shared_memory->logic_state == log_reveal && shared_memory->capture_buffer.jpeg_copied){
+                printf("%scleaning memory\n",PC);
+                //memory cleanup
+                #ifdef NO_CAM
                 #else
-                    free((void*)shared_memory->capture_buffer.jpeg_data);
                 #endif
-                shared_memory->capture_buffer.jpeg_data = NULL;
+                shared_memory->capture_buffer.jpeg_copied = 0;
             }
             sem_post(&shared_memory->sem_decode);
         }

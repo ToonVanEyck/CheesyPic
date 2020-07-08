@@ -22,8 +22,6 @@ typedef struct{
     photo_element_t *photo_list;
     xmlNode *root;
     xmlDoc *doc;
-    long design_svg_size;
-    unsigned char *design_svg_data;
 }design_t;
 
 int load_design_from_file(design_t *design, const char *svg_design);

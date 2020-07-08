@@ -78,6 +78,7 @@ void prepare_photo_list(xmlNode * a_node,photo_element_t *photo_list, int *index
 
 int load_design_from_file(design_t *design, const char *svg_design)
 {
+    memset(design,0,sizeof(design_t));
     design->doc = xmlReadFile(svg_design, NULL, 0);
     if(design->doc == NULL){
         // xmlFreeDoc(design->doc); // file is freed elsewhere
@@ -134,9 +135,27 @@ int render_design(design_t *design, unsigned char **capture_data)
     cairo_t *design_ctx;
     cairo_status_t status;
 
-    //#define SVGFILE "../cp_empty_template_benchmark.svg"
-    //handle = rsvg_handle_new_from_file (SVGFILE,&error);
-    handle = rsvg_handle_new_from_data(xmlBufferContent(buffer),xmlBufferLength(buffer),&error);
+    // FILE *fp = fopen("design.svg", "w");
+    // fprintf(fp,"%s",xmlBufferContent(buffer));
+    // fclose(fp);
+
+    //handle = rsvg_handle_new_from_data(xmlBufferContent(buffer),xmlBufferLength(buffer),&error);
+    handle = rsvg_handle_new_with_flags(RSVG_HANDLE_FLAG_UNLIMITED);
+    if(handle == NULL){
+        fprintf(stderr,"failed to create handle from data\n");
+        exit(1);
+    }
+    rsvg_handle_write(handle,xmlBufferContent(buffer),xmlBufferLength(buffer),&error);
+    if (error != NULL)
+    {
+        printf("rsvg_handle_new_from_file error!\n");
+        printf ("%s\n",error->message);
+        return 1;
+    }
+    if(!rsvg_handle_close(handle,&error)){
+        printf("failed to close the handle!\n");
+        return 1;
+    }
     rsvg_handle_set_dpi_x_y(handle,300.0,300.0);
     rsvg_handle_get_dimensions (handle, &dim);
     width = dim.width;

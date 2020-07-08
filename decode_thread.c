@@ -51,7 +51,7 @@ void run_decode_thread(shared_memory_t *shared_memory)
                         int jpegSubsamp;
                         tjhandle _jpegDecompressor = tjInitDecompress();
                         tjDecompressHeader2(_jpegDecompressor, 
-                                            (unsigned char*)shared_memory->preview_buffer[i].jpeg_data, 
+                                            (unsigned char*)shared_memory->preview_buffer[i].gp_jpeg_data, 
                                             shared_memory->preview_buffer[i].size, 
                                             &shared_memory->preview_buffer[i].width, 
                                             &shared_memory->preview_buffer[i].height, 
@@ -59,7 +59,7 @@ void run_decode_thread(shared_memory_t *shared_memory)
                         //printf("%ssize %dx%d\n",PD,shared_memory->preview_buffer[i].width,shared_memory->preview_buffer[i].height);
                         if(shared_memory->preview_buffer[i].width * shared_memory->preview_buffer[i].height <= PREVIEW_WIDTH * PREVIEW_HEIGHT){               
                             tjDecompress2(  _jpegDecompressor, 
-                                            (unsigned char*)shared_memory->preview_buffer[i].jpeg_data, 
+                                            (unsigned char*)shared_memory->preview_buffer[i].gp_jpeg_data, 
                                             shared_memory->preview_buffer[i].size, 
                                             shared_memory->preview_buffer[i].raw_data,
                                             shared_memory->preview_buffer[i].width, 
@@ -84,14 +84,14 @@ void run_decode_thread(shared_memory_t *shared_memory)
             int jpegSubsamp;
             tjhandle _jpegDecompressor = tjInitDecompress();
             tjDecompressHeader2(_jpegDecompressor, 
-                                (unsigned char*)shared_memory->capture_buffer.jpeg_data, 
+                                (unsigned char*)shared_memory->capture_buffer.jpeg_buffer, 
                                 shared_memory->capture_buffer.size, 
                                 &shared_memory->capture_buffer.width, 
                                 &shared_memory->capture_buffer.height, 
                                 &jpegSubsamp);
             if(shared_memory->capture_buffer.width * shared_memory->capture_buffer.height <= CAPTURE_MAX_MP * 4000000){               
                 tjDecompress2(  _jpegDecompressor, 
-                                (unsigned char*)shared_memory->capture_buffer.jpeg_data, 
+                                (unsigned char*)shared_memory->capture_buffer.jpeg_buffer, 
                                 shared_memory->capture_buffer.size, 
                                 shared_memory->capture_buffer.raw_data,
                                 shared_memory->capture_buffer.width, 

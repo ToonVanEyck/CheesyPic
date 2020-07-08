@@ -6,7 +6,7 @@ project(glfw_test   VERSION     1.0
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 
-add_definitions(-DNO_CAM)
+# add_definitions(-DNO_CAM)
 add_definitions(-DNO_PRINT)
 add_definitions(-DFAST_MODE)
 
@@ -25,6 +25,7 @@ find_package(LibXml2 REQUIRED)
 find_package(JSONC REQUIRED)
 find_package(Glib REQUIRED)
 find_package(LibRSVG REQUIRED)
+find_package(B64 REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED gtk+-3.0)
@@ -41,7 +42,8 @@ include_directories(.
     ${Glib_INCLUDE_DIRS}
     ${LibRSVG_INCLUDE_DIR}
     ${GDK-PixBuf_INCLUDE_DIR}
-    ${Cairo_INCLUDE_DIR})
+    ${Cairo_INCLUDE_DIR}
+    ${B64_INCLUSDE_DIR})
 
 # PHOTOBOOTH
 add_executable(myapp main.c glad.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c design.c)
@@ -51,6 +53,7 @@ target_link_libraries(myapp ${JSONC_LIBRARY} )
 target_link_libraries(myapp ${LIBXML2_LIBRARIES})
 target_link_libraries(myapp ${LibRSVG_LIBRARIES})
 target_link_libraries(myapp ${GTK_LIBRARIES})
+target_link_libraries(myapp ${B64_LIBRARIES})
 target_link_libraries(myapp glfw)
 target_link_libraries(myapp OpenGL::GL)
 
@@ -66,3 +69,4 @@ add_executable(svg_render svg_to_png.c design.c lodepng.c)
 target_link_libraries(svg_render ${GTK_LIBRARIES})
 target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
 target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
+target_link_libraries(svg_render ${B64_LIBRARIES})

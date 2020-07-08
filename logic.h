@@ -7,6 +7,8 @@
 #include <sys/time.h>
 #include <signal.h>
 
+#include <b64/cencode.h>
+
 #include "shared_memory.h"
 #include "design.h"
 #include "lodepng.h"
@@ -66,7 +68,6 @@ typedef struct photobooth_session{
     unsigned photo_counter;
     unsigned char *current_jpg;
     unsigned char **capture_data; // array of char pointers
-    // unsigned char design_svg_data;
 }photobooth_session_t; 
 
 
@@ -75,5 +76,6 @@ int load_png_image(overlay_t *overlay);
 void free_logic(photobooth_config_t *config, printer_info_t *printer_info);
 int read_config(photobooth_config_t *config);
 void run_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info);
+
 
 #endif

@@ -37,7 +37,7 @@ typedef enum{
 typedef struct{
     unsigned long size;
     void *cameraFile;
-    const char *jpeg_data;
+    const char *gp_jpeg_data;
     unsigned int width;
     unsigned int height;
     unsigned char raw_data[PREVIEW_WIDTH * PREVIEW_HEIGHT * 4];
@@ -53,10 +53,12 @@ typedef struct{
 typedef struct{
     unsigned long size;
     void *cameraFile;
-    const char *jpeg_data;
+    const char *gp_jpeg_data;
+    unsigned char jpeg_buffer[3000000];
     unsigned int width;
     unsigned int height;
     unsigned char raw_data[CAPTURE_MAX_MP * 4000000];
+    int jpeg_copied;
 }capture_buffer_t;
 
 typedef struct{
