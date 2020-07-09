@@ -282,22 +282,21 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                                     shared_memory->preview_buffer[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
                                     shared_memory->preview_buffer[i].raw_data);
                         glUniform1i(glGetUniformLocation(program, "tex_preview"), 1);
-
-                        glActiveTexture(GL_TEXTURE0);
-                        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->overlay_buffer.width, 
-                                    shared_memory->overlay_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
-                                    shared_memory->overlay_buffer.raw_data);
-                        glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
-                        
-                        glUniformMatrix2fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
-                        glUniformMatrix2fv(reveal_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
-                        glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
-                        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-                        glfwSwapBuffers(*window);
                         shared_memory->preview_buffer[i].pre_state = pre_capture;
                         break;
                     }
                 }
+                glActiveTexture(GL_TEXTURE0);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->overlay_buffer.width, 
+                    shared_memory->overlay_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
+                    shared_memory->overlay_buffer.raw_data);
+                glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
+
+                glUniformMatrix2fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
+                glUniformMatrix2fv(reveal_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
+                glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                glfwSwapBuffers(*window);
             }else{
                 // -------- CAPTURE LOGIC --------
                 mirror_reveal[0][0] = (shared_memory->reveal_mirror==1)?(-1):(1);

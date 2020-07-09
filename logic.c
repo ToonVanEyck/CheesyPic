@@ -180,21 +180,20 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
     if(init_state){
         prev_logic_state = shared_memory->logic_state;
         printf("%sEntered %s state!\n",PL,get_state_name(prev_logic_state));
+        // select overlays here!
+        switch (shared_memory->logic_state){
+            case log_idle:          set_image_overlay(&shared_memory->overlay_buffer,&config->idle);                        break;
+            case log_triggred:                                                                                              break;
+            case log_countdown_3:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_3);   break;
+            case log_countdown_2:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_2);   break;
+            case log_countdown_1:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_1);   break;
+            case log_capture:       set_image_overlay(&shared_memory->overlay_buffer,&config->smile);                       break;
+            case log_reveal:                                                                                                break; //the captured image is shown instead of the overlay
+            case log_procces:       set_image_overlay(&shared_memory->overlay_buffer,&config->print);                       break;
+            default:                                                                                                        break;
+        }
+        sem_post(&shared_memory->sem_render);
     }
-
-    // select overlays here!
-    switch (shared_memory->logic_state){
-        case log_idle:          set_image_overlay(&shared_memory->overlay_buffer,&config->idle);                        break;
-        case log_triggred:                                                                                              break;
-        case log_countdown_3:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_3);   break;
-        case log_countdown_2:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_2);   break;
-        case log_countdown_1:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_1);   break;
-        case log_capture:       set_image_overlay(&shared_memory->overlay_buffer,&config->smile);                       break;
-        case log_reveal:                                                                                                break; //the captured image is shown instead of the overlay
-        case log_procces:       set_image_overlay(&shared_memory->overlay_buffer,&config->print);                       break;
-        default:                                                                                                        break;
-    }
-
     struct itimerval fast_time = {{0,0},{0,100000}};
 
     if(shared_memory->photobooth_active){
@@ -241,11 +240,11 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                     shared_memory->logic_state = log_capture;
                     alarm_var = 0;
                 }
-
                 break;
             case log_capture:
                 // handled in capture thread
                 if(init_state){
+                    //for(int i = 0;i<NUM_JPEG_BUFFERS;i++)shared_memory->preview_buffer[0].pre_state = pre_render;
                     printf("%scaptured %d/%d photos.\n",PL,session->photo_counter+1,config->design.total_photos);
                     session->photo_counter++;
                 }
