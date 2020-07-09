@@ -59,8 +59,14 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
         printf("Error couldn't allocate memory for session\n");
         return 1;
     }
-    if(get_printer_driver_name(&config->printer_driver_name)) return 1;
-    #ifndef NO_PRINT
+
+    #ifdef NO_PRINT
+        //nothing
+    #else
+        if(get_printer_driver_name(&config->printer_driver_name)){
+        printf("No default printer...\n");
+        return 1;
+        }
         is_printing_finished(config->printer_driver_name,printer_info);
         if(!printer_info->connected){
             printf("Error [%s] printer connected.\n",config->printer_driver_name);
