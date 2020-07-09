@@ -9,10 +9,10 @@ void alarm_capture(int dummy)
 
 static unsigned long writeJpg(char *name, const char *data, unsigned long size){
     FILE *file;
-    file = fopen(name, "wb");
+    file = fopen(name, "wb+");
     if (!file)
     {
-        fprintf(stderr, "Unable to open file %s", name);
+        fprintf(stderr, "Unable to open file %s\n", name);
         return 1;
     }
     
@@ -144,6 +144,10 @@ int read_config(photobooth_config_t *config)
     *config->preview_mirror = 1;
     *config->reveal_mirror = 1;
 
+    //output parameters
+    config->photo_output_directory = "/home/toon/Pictures/Cheesypic/Default";
+    config->photo_output_name = "cheesypic_default";
+
     load_design_from_file(&config->design, "../design_template.svg");
 }
 
@@ -265,12 +269,17 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 if(init_state){
                     setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->preview_time,NULL);
                     // save image
-                    static unsigned char save_capture_cnt = 0;
-                    char capture_path[100]={0};
-                    snprintf(capture_path,100,"../captures/%d.jpg",save_capture_cnt%3+1);
-                    writeJpg(capture_path,(const char *)shared_memory->capture_buffer.jpeg_buffer,shared_memory->capture_buffer.size);
-                    save_capture_cnt++;
-
+                    char capture_path[128]={0};
+                    time_t now;
+                    struct tm ts;
+                    time(&now);
+                    ts = *localtime(&now);
+                    sprintf(capture_path,"%s/%s",config->photo_output_directory,config->photo_output_name);
+                    strftime(&capture_path[strlen(capture_path)], sizeof(capture_path), "_%y%m%d_%H%M%S", &ts);
+                    sprintf(&capture_path[strlen(capture_path)],"_%d.jpg",session->photo_counter);
+                    #ifndef NO_SAVE
+                        writeJpg(capture_path,(const char *)shared_memory->capture_buffer.jpeg_buffer,shared_memory->capture_buffer.size);
+                    #endif
                     // encode base64 image
                     /* set up a destination buffer large enough to hold the encoded data */
                     int encoded_size = 32 + 2*shared_memory->capture_buffer.size;

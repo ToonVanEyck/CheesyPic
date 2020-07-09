@@ -6,8 +6,9 @@ project(glfw_test   VERSION     1.0
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 
-# add_definitions(-DNO_CAM)
+add_definitions(-DNO_CAM)
 add_definitions(-DNO_PRINT)
+add_definitions(-DNO_SAVE)
 add_definitions(-DFAST_MODE)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")

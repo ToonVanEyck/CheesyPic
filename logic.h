@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <time.h>
 #include <signal.h>
 
 #include <b64/cencode.h>
@@ -60,6 +61,8 @@ typedef struct{
     unsigned char *preview_mirror;
     unsigned char *reveal_mirror;
     char *printer_driver_name;
+    char *photo_output_directory;
+    char *photo_output_name;
     design_t design;
 }photobooth_config_t;
 
