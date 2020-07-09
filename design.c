@@ -23,6 +23,19 @@ int xml_node_is_cheesypic_placeholder(xmlNode * a_node)
     return rc;
 }
 
+int xml_node_is_cheesypic_cutline(xmlNode * a_node)
+{
+    int rc = 0;
+    if (a_node->type == XML_ELEMENT_NODE) {
+        xmlChar *id = xmlGetProp(a_node,"id");
+        if(id && strstr(id,"cheesypic_cutline")){
+            rc = 1;
+        }
+        xmlFree(id);
+    }
+    return rc;
+}
+
 int cnt_locations(xmlNode * a_node)
 {
     int cnt = 0;
@@ -73,6 +86,10 @@ void prepare_photo_list(xmlNode * a_node,photo_element_t *photo_list, int *index
             }
         }
         prepare_photo_list(cur_node->children,photo_list,index);
+        if(xml_node_is_cheesypic_cutline(cur_node)){
+            xmlUnlinkNode(cur_node);
+            xmlFreeNode(cur_node);
+        }
     }
 }
 

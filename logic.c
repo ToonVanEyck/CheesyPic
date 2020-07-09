@@ -138,7 +138,7 @@ int read_config(photobooth_config_t *config)
     *config->preview_mirror = 1;
     *config->reveal_mirror = 1;
 
-    load_design_from_file(&config->design, "../cp_empty_template_benchmark.svg");
+    load_design_from_file(&config->design, "../design_template.svg");
 }
 
 void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
@@ -352,7 +352,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
 
             case log_print:
                 if(init_state){
-                    print_file("print_me.jpg");
+                    print_file("print_me.png");
                 }
                 if(is_printing_finished(config->printer_driver_name,printer_info)) shared_memory->logic_state = log_idle;
                 break;
