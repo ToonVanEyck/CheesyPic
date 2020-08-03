@@ -29,3 +29,4 @@ commands:
 'l'     toggle mirror liveview
 'm'     toggle mirror reveal
 'f'     toggle fast mode
+'w'     toggle windowed / fulscreen mode

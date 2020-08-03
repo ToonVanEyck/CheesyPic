@@ -108,6 +108,11 @@ void stop_render_thread(int dummy)
     renderRunning = 0;
 }
 
+
+GLFWmonitor* primaryMonitor;
+struct windowParams{int xpos; int ypos; int width; int height};
+struct windowParams windowParams;
+
 int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, GLuint *resize_mat, GLuint *preview_mirror_mat, GLuint *reveal_mirror_mat, GLuint *fragment_shader, GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
 {
     GLint vpos_location, vcol_location;
@@ -120,12 +125,15 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
+    primaryMonitor = glfwGetPrimaryMonitor();
     *window = glfwCreateWindow(600, 400, "CheesyPic Photobooth by ToonVanEyck", NULL/*glfwGetPrimaryMonitor()*/, NULL);
     if (!*window)
     {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
+
+    
 
     glfwSetKeyCallback(*window, key_callback);
 
@@ -252,6 +260,17 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 break;
             case 'f':
                 shared_memory->fastmode ^= 1;
+                break;
+            case 'w': // toggle windowed / windowless
+                if(glfwGetWindowMonitor(*window)){
+                    glfwSetWindowMonitor(*window,NULL,windowParams.xpos,windowParams.ypos,windowParams.width,windowParams.height,GLFW_DONT_CARE);
+                }else{
+                    glfwGetWindowPos(*window,&windowParams.xpos,&windowParams.ypos);
+                    glfwGetWindowSize(*window,&windowParams.width,&windowParams.height);
+                    int width, height;
+                    glfwGetMonitorWorkarea(primaryMonitor,NULL,NULL,&width,&height);
+                    glfwSetWindowMonitor(*window,primaryMonitor,0,0,width,height,GLFW_DONT_CARE);
+                }
                 break;
             default:
                 break;
