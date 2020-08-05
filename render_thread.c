@@ -110,7 +110,7 @@ void stop_render_thread(int dummy)
 
 
 GLFWmonitor* primaryMonitor;
-struct windowParams{int xpos; int ypos; int width; int height};
+struct windowParams{int xpos; int ypos; int width; int height;};
 struct windowParams windowParams;
 
 int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, GLuint *resize_mat, GLuint *preview_mirror_mat, GLuint *reveal_mirror_mat, GLuint *fragment_shader, GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
