@@ -1,0 +1,18 @@
+#! /bin/bash
+
+printerConnected(){
+    if BACKEND_STATS_ONLY=2 ../../Downloads/selphy_print/mitsu70x -s 2>&1 | grep -q 'CP-D707DW'; then
+        echo "No Printer connected"
+    else
+        echo "Printer connected"
+    fi
+}
+
+if [ -n "$1" ]; then 
+	case "$1" in
+	-p) BACKEND_STATS_ONLY=2 ../../Downloads/selphy_print/mitsu70x -s 2>&1 | grep -q 'CP-D707DW'
+	-s) BACKEND_STATS_ONLY=2 ../../Downloads/selphy_print/mitsu70x -s 2>&1 | grep -q 'Printing'
+	-c) printerConnected ;; # Message for -c option
+	*) echo "Inavlid option" ;; # In case you typed a different option other than a,b,c
+	esac
+fi
