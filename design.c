@@ -109,11 +109,11 @@ int load_design_from_file(design_t *design, const char *svg_design)
 
     design->total_locations = cnt_locations(design->root);
     cnt_photos(design->root,&design->total_photos);
-    printf("%d unique photos spread over %d locations\n",design->total_photos,design->total_locations);
+    LOG("%d unique photos spread over %d locations\n",design->total_photos,design->total_locations);
 
     design->photo_list = malloc(design->total_locations*sizeof(photo_element_t));
     if(design->photo_list == NULL){
-        fprintf(stderr,"failled to allocate memory for photo list\n");
+        LOG("failled to allocate memory for photo list\n");
         return 1;
     }
     memset(design->photo_list,0,design->total_locations*sizeof(photo_element_t*));
@@ -134,7 +134,7 @@ int render_design(design_t *design, unsigned char **capture_data)
         }
     }
     if(xlink_ns == NULL){
-        fprintf(stderr,"Couldn't find xlink namespace\n");
+        LOG("Couldn't find xlink namespace\n");
         return 1;
     }
 
@@ -153,24 +153,24 @@ int render_design(design_t *design, unsigned char **capture_data)
     cairo_status_t status;
 
     // FILE *fp = fopen("design.svg", "w");
-    // fprintf(fp,"%s",xmlBufferContent(buffer));
+    // fLOG(fp,"%s",xmlBufferContent(buffer));
     // fclose(fp);
 
     //handle = rsvg_handle_new_from_data(xmlBufferContent(buffer),xmlBufferLength(buffer),&error);
     handle = rsvg_handle_new_with_flags(RSVG_HANDLE_FLAG_UNLIMITED);
     if(handle == NULL){
-        fprintf(stderr,"failed to create handle from data\n");
+        LOG("failed to create handle from data\n");
         exit(1);
     }
     rsvg_handle_write(handle,xmlBufferContent(buffer),xmlBufferLength(buffer),&error);
     if (error != NULL)
     {
-        printf("rsvg_handle_new_from_file error!\n");
-        printf ("%s\n",error->message);
+        LOG("rsvg_handle_new_from_file error!\n");
+        LOG ("%s\n",error->message);
         return 1;
     }
     if(!rsvg_handle_close(handle,&error)){
-        printf("failed to close the handle!\n");
+        LOG("failed to close the handle!\n");
         return 1;
     }
     rsvg_handle_set_dpi_x_y(handle,300.0,300.0);
@@ -188,8 +188,8 @@ int render_design(design_t *design, unsigned char **capture_data)
     status = cairo_status (design_ctx);
     if (status)
     {
-        printf("cairo_status!\n");
-        printf ("%s\n",cairo_status_to_string (status));
+        LOG("cairo_status!\n");
+        LOG ("%s\n",cairo_status_to_string (status));
         return 1;
     }
 

@@ -10,13 +10,18 @@
 
 #include <b64/cencode.h>
 
+#define PL "\033[0;32m"
+#ifndef LOG
+#define LOG(...) do{fprintf(stderr,"logic: ");fprintf(stderr, __VA_ARGS__);}while(0)
+#endif
+
 #include "shared_memory.h"
 #include "design.h"
 #include "lodepng.h"
 #include "printer.h"
 
 
-#define PL "\033[0;32m"
+
 
 typedef enum{
     image_png,
@@ -60,6 +65,7 @@ typedef struct{
     struct itimerval preview_time;
     unsigned char *preview_mirror;
     unsigned char *reveal_mirror;
+    unsigned char printer_active;
     char *printer_driver_name;
     char *photo_output_directory;
     char *photo_output_name;

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <glib/gprintf.h>
+//#include <glib/gLOG.h>
 #include <b64/cencode.h>
 
 #include "design.h"
@@ -19,7 +19,7 @@ static unsigned long readJpg(char *name, char **data){
     file = fopen(name, "rb");
     if (!file)
     {
-        fprintf(stderr, "Unable to open file %s", name);
+        LOG( "Unable to open file %s", name);
         return 1;
     }
     
@@ -27,17 +27,17 @@ static unsigned long readJpg(char *name, char **data){
     fseek(file, 0, SEEK_END);
     size=ftell(file);
     fseek(file, 0, SEEK_SET);
-    printf("size %ld\n",size);
+    LOG("size %ld\n",size);
     //Allocate memory
     *data=(char *)malloc(size+1);
     if (!*data)
     {
-        fprintf(stderr, "Memory error!");
+        LOG( "Memory error!");
         fclose(file);
         return 1;
     }
     fread(*data, size, 1, file);
-    printf("%x %x %x\n",(unsigned char)(*data)[0],(unsigned char)(*data)[1],(unsigned char)(*data)[2]);
+    LOG("%x %x %x\n",(unsigned char)(*data)[0],(unsigned char)(*data)[1],(unsigned char)(*data)[2]);
     fclose(file);
     return size;
 }

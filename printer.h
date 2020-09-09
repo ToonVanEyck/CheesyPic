@@ -12,9 +12,12 @@
 #include <errno.h>
 #include <json-c/json.h>
 
-#include "shared_memory.h"
-
 #define PP "\033[0;33m"
+#ifndef LOG
+#define LOG(...) do{fprintf(stderr,"printer: ");fprintf(stderr, __VA_ARGS__);}while(0)
+#endif
+
+#include "shared_memory.h"
 
 typedef enum{
     Idle,

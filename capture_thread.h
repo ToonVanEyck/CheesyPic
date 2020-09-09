@@ -21,10 +21,13 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#define PC "\033[0;36m"
+#ifndef LOG
+#define LOG(...) do{fprintf(stderr,"capture: ");fprintf(stderr, __VA_ARGS__);}while(0)
+#endif
+
 #include "decode_thread.h"
 #include "shared_memory.h"
-
-#define PC "\033[0;36m"
 
 #define FRAME_RATE 25
 #define FRAME_PERIOD (1000000000/FRAME_RATE)

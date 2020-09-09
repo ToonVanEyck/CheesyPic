@@ -17,9 +17,12 @@
 
 #include <turbojpeg.h>
 
-#include "shared_memory.h"
-
 #define PD "\033[0;34m"
+#ifndef LOG
+#define LOG(...) do{fprintf(stderr,"decode: ");fprintf(stderr, __VA_ARGS__);}while(0)
+#endif
+
+#include "shared_memory.h"
 
 void *start_decode_thread(void *shared_memory);
 void stop_decode_thread();

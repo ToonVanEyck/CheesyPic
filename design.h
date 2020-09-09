@@ -11,6 +11,10 @@
 
 #include "lodepng.h"
 
+#ifndef LOG
+#define LOG(...) do{fprintf(stderr,"design: ");fprintf(stderr, __VA_ARGS__);}while(0)
+#endif
+
 typedef struct{
     xmlNode *photo_node;
     unsigned id;

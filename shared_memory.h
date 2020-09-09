@@ -66,6 +66,7 @@ typedef struct{
     unsigned char fastmode;
     unsigned char preview_mirror;
     unsigned char reveal_mirror;
+    unsigned char printing_wanted;
     sem_t sem_decode;
     sem_t sem_render;
     sem_t sem_logic;

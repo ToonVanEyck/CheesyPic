@@ -11,7 +11,7 @@ static unsigned long readJpg(char *name, char *data){
     file = fopen(name, "rb");
     if (!file)
     {
-        fprintf(stderr, "Unable to open file %s", name);
+        LOG("Unable to open file %s", name);
         return 1;
     }
     
@@ -19,12 +19,12 @@ static unsigned long readJpg(char *name, char *data){
     fseek(file, 0, SEEK_END);
     size=ftell(file);
     fseek(file, 0, SEEK_SET);
-    //printf("%s %s has size %ld\n",PC,name,size);
+    //LOG(" %s has size %ld\n",name,size);
     //Allocate memory
     //*data=(char *)malloc(size+1);
     // if (!*data)
     // {
-    //     fprintf(stderr, "Memory error!");
+    //     LOG( "Memory error!");
     //     fclose(file);
     //     return 1;
     // }
@@ -38,7 +38,7 @@ static unsigned long readJpg(char *name, char *data){
 //     file = fopen(name, "wb");
 //     if (!file)
 //     {
-//         fprintf(stderr, "Unable to open file %s", name);
+//         LOG( "Unable to open file %s", name);
 //         return 1;
 //     }
     
@@ -49,7 +49,7 @@ static unsigned long readJpg(char *name, char *data){
 
 void start_capture_thread(shared_memory_t *shared_memory)
 {
-    printf("%sStarted capture thread!\n",PC);
+    LOG("Started capture thread!\n");
     signal(SIGINT, stop_capture_thread);
     GPContext *ctx;
     Camera *camera;
@@ -58,13 +58,13 @@ void start_capture_thread(shared_memory_t *shared_memory)
     pthread_t decoder_thread;
 
     if(init_capture_thread(fds, &numfd, &ctx, &camera)){
-        printf("%sFinished capture thread!\n",PC);
+        LOG("Finished capture thread!\n");
         // exit 
         exit(1);
     }else{
         captureRunning = 1;
         if(pthread_create(&decoder_thread, NULL, start_decode_thread, shared_memory)) {
-            fprintf(stderr, "Error creating decode thread\n");
+            LOG("Error creating decode thread\n");
             captureRunning = 0;
         }
         run_capture_thread(shared_memory, fds, &numfd, &ctx, &camera);
@@ -72,7 +72,7 @@ void start_capture_thread(shared_memory_t *shared_memory)
         pthread_join(decoder_thread,NULL);
         clean_capture_thread(fds, &numfd, &ctx, &camera);
     }
-    printf("%sFinished capture thread!\n",PC);
+    LOG("Finished capture thread!\n");
 }
 
 void stop_capture_thread(int dummy)
@@ -116,11 +116,11 @@ int init_timer(struct pollfd *fds, int *numfd)
     fds[FDS_TIMER].fd = timerfd_create(CLOCK_MONOTONIC, 0);
 
     if (fds[FDS_TIMER].fd == -1) {
-        fprintf(stderr, "Failed to create timerfd\n");
+        LOG("Failed to create timerfd\n");
         return 1;
     }
     if (timerfd_settime(fds[FDS_TIMER].fd, 0, &timerValue, NULL) < 0) {
-        fprintf(stderr, "could not start timer\n");
+        LOG("could not start timer\n");
         return 1;
     }
     fds[FDS_TIMER].events = POLLIN;
@@ -136,25 +136,25 @@ int init_camera(GPContext **ctx, Camera **camera)
     int count = gp_camera_autodetect(cameraList, *ctx);
     if (count <= 0){
         if (count == 0) {
-            printf("%sNo cameras detected\n",PC);
+            LOG("No cameras detected\n");
         } else {
-            printf("%sGP ERROR :%d\n",PC,count);
+            LOG("GP ERROR :%d\n",count);
         }
         gp_context_unref(*ctx);
         return 1;
     }else{
-		printf("%scameras detected\n",PC);
+		LOG("cameras detected\n");
 		const char *modelName = NULL, *portName = NULL;
 		gp_list_get_name  (cameraList, 0, &modelName);
 		gp_list_get_value (cameraList, 0, &portName);
-		printf("%sfound model: %s @ %s\n",PC,modelName, portName);
+		LOG("found model: %s @ %s\n",modelName, portName);
 		CameraAbilitiesList *al = NULL;
 		CameraAbilities a;
 		gp_abilities_list_new (&al);
 		gp_abilities_list_load (al, NULL);
 		int i = gp_abilities_list_lookup_model (al, modelName);
 		if (i < 0)
-			printf("%sCould not find model: '%s'.\n",PC,gp_result_as_string (i));
+			LOG("Could not find model: '%s'.\n",gp_result_as_string (i));
 		gp_abilities_list_get_abilities (al, i, &a);
 		GPPortInfoList *il = NULL;
 		GPPortInfo info;
@@ -162,18 +162,18 @@ int init_camera(GPContext **ctx, Camera **camera)
 		gp_port_info_list_load (il);
 		i = gp_port_info_list_lookup_path (il, portName);
 		if (i < 0)
-			printf("%sCould not find port: '%s'.\n",PC,gp_result_as_string (i));
+			LOG("Could not find port: '%s'.\n",gp_result_as_string (i));
 		gp_port_info_list_get_info (il, i, &info);
 
 		/* Capture an image, download it and delete it. */
-		printf("%sInitializing camera...\n",PC);
+		LOG("Initializing camera...\n");
 		CameraFilePath path;
 		const char *data;
         const char *mime_type;
 		unsigned long size;
 
 		i = gp_camera_new (camera);
-		printf("%s%d %s\n",PC,i,a.model);
+		LOG("%d %s\n",i,a.model);
 		gp_camera_set_abilities (*camera, a);
 		gp_camera_set_port_info (*camera, info);
 
@@ -204,7 +204,7 @@ static void print_fps(void)
     if (t - tRate0 >= 5.0) {
         float seconds = t - tRate0;
         float fps = frames / seconds;
-        printf("\33[0m%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,fps);
+        LOG("\33[0m%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,fps);
         tRate0 = t;
         frames = 0;
     }
@@ -244,11 +244,11 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                                 rc[0] = gp_file_new ((CameraFile **)&shared_memory->preview_buffer[i].cameraFile);
                                 rc[1] = gp_camera_capture_preview (*camera, (CameraFile *)shared_memory->preview_buffer[i].cameraFile, *ctx);
                                 rc[2] = gp_file_get_data_and_size ((CameraFile *)shared_memory->preview_buffer[i].cameraFile, &(shared_memory->preview_buffer[i].gp_jpeg_data),&(shared_memory->preview_buffer[i].size));
-                                if(rc[0]||rc[1]||rc[2])printf("%s preview rc :[%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2]);
+                                if(rc[0]||rc[1]||rc[2])LOG(" preview rc :[%d] [%d] [%d]\n",rc[0],rc[1],rc[2]);
                             #endif
                             shared_memory->preview_buffer[i].pre_state = pre_decode;
                             //sem_post(&shared_memory->sem_decode);
-                            //printf("%s%d Capture complete\n",PC,i);
+                            //LOG("%d Capture complete\n",i);
                             print_fps();
                             break;
                         }else{
@@ -270,10 +270,10 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                     rc[0] = gp_camera_capture(*camera,GP_CAPTURE_IMAGE ,&cfp,*ctx);
                     rc[1] = gp_file_new((CameraFile **)&shared_memory->capture_buffer.cameraFile);
                     rc[2] = gp_camera_file_get(*camera, cfp.folder, cfp.name,GP_FILE_TYPE_NORMAL, (CameraFile *)shared_memory->capture_buffer.cameraFile, *ctx);
-                    rc[3] = gp_file_get_data_and_size ((CameraFile *)shared_memory->capture_buffer.cameraFile, &shared_memory->capture_buffer.gp_jpeg_data, &shared_memory->capture_buffer.size);                    printf("%s%s has size %ld\n",PC,"capture",shared_memory->capture_buffer.size);
+                    rc[3] = gp_file_get_data_and_size ((CameraFile *)shared_memory->capture_buffer.cameraFile, &shared_memory->capture_buffer.gp_jpeg_data, &shared_memory->capture_buffer.size);                    LOG("%s has size %ld\n","capture",shared_memory->capture_buffer.size);
                      rc[4] = gp_camera_file_delete(*camera, cfp.folder, cfp.name,*ctx);
                     if(rc[0]||rc[0]||rc[0]||rc[3]||rc[4]){
-                        printf("%s capture rc :[%d] [%d] [%d] [%d] [%d]\n",PC,rc[0],rc[1],rc[2],rc[3],rc[4]);
+                        LOG(" capture rc :[%d] [%d] [%d] [%d] [%d]\n",rc[0],rc[1],rc[2],rc[3],rc[4]);
                         exit(1);
                     }
                     memcpy(shared_memory->capture_buffer.jpeg_buffer,shared_memory->capture_buffer.gp_jpeg_data,shared_memory->capture_buffer.size);
@@ -282,7 +282,7 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                 shared_memory->logic_state = log_decode;
             }
             if(shared_memory->logic_state == log_reveal && shared_memory->capture_buffer.jpeg_copied){
-                printf("%scleaning memory\n",PC);
+                LOG("cleaning memory\n");
                 //memory cleanup
                 #ifdef NO_CAM
                 #else

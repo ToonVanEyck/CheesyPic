@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 # set the project name and version
-project(glfw_test   VERSION     1.0
-                     LANGUAGES   C)
+project(cheesypic   VERSION     1.0
+                    LANGUAGES   C)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 
 add_definitions(-DNO_CAM)
-add_definitions(-DNO_PRINT)
+#add_definitions(-DNO_PRINT)
 add_definitions(-DNO_SAVE)
 add_definitions(-DFAST_MODE)
 
@@ -47,16 +47,16 @@ include_directories(.
     ${B64_INCLUSDE_DIR})
 
 # PHOTOBOOTH
-add_executable(myapp main.c glad.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c design.c)
-target_link_libraries(myapp ${Gphoto2_LIBRARIES})
-target_link_libraries(myapp ${TurboJPEG_LIBRARIES})
-target_link_libraries(myapp ${JSONC_LIBRARY} )
-target_link_libraries(myapp ${LIBXML2_LIBRARIES})
-target_link_libraries(myapp ${LibRSVG_LIBRARIES})
-target_link_libraries(myapp ${GTK_LIBRARIES})
-target_link_libraries(myapp ${B64_LIBRARIES})
-target_link_libraries(myapp glfw)
-target_link_libraries(myapp OpenGL::GL)
+add_executable(photobooth main.c glad.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c design.c)
+target_link_libraries(photobooth ${Gphoto2_LIBRARIES})
+target_link_libraries(photobooth ${TurboJPEG_LIBRARIES})
+target_link_libraries(photobooth ${JSONC_LIBRARY} )
+target_link_libraries(photobooth ${LIBXML2_LIBRARIES})
+target_link_libraries(photobooth ${LibRSVG_LIBRARIES})
+target_link_libraries(photobooth ${GTK_LIBRARIES})
+target_link_libraries(photobooth ${B64_LIBRARIES})
+target_link_libraries(photobooth glfw)
+target_link_libraries(photobooth OpenGL::GL)
 
 # RENDER EXAMPLE
 add_executable(render_jpeg render_jpg.c glad.c)

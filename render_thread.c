@@ -6,7 +6,7 @@ static unsigned long readJpg(char *name, char **data){
     file = fopen(name, "rb");
     if (!file)
     {
-        fprintf(stderr, "Unable to open file %s", name);
+        LOG("Unable to open file %s", name);
         return 1;
     }
     
@@ -18,7 +18,7 @@ static unsigned long readJpg(char *name, char **data){
     *data=(char *)malloc(size+1);
     if (!*data)
     {
-        fprintf(stderr, "Memory error!");
+        LOG("Memory error!");
         fclose(file);
         return 1;
     }
@@ -76,7 +76,7 @@ static const char* fragment_shader_text =
 
 static void error_callback(int error, const char* description)
 {
-    fprintf(stdout, "Error: %s\n", description);
+    LOG("Error: %s\n", description);
 }
  
 static char button_pushed;
@@ -92,7 +92,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 void start_render_thread(shared_memory_t *shared_memory)
 {
-    printf("%sStarted render thread!\n",PR);
+    LOG("Started render thread!\n");
     signal(SIGINT, stop_render_thread);
     GLuint textures[NUM_TEXTURES];
     GLuint program, resize_mat, preview_mirror_mat, reveal_mirror_mat, fragment_shader, vertex_shader, ebo, vbo;
@@ -101,7 +101,7 @@ void start_render_thread(shared_memory_t *shared_memory)
     renderRunning = 1;
     run_render_thread(shared_memory, &window,program, resize_mat, preview_mirror_mat, reveal_mirror_mat);
     cleanup_render_thread(&window, textures, &program, &resize_mat, &preview_mirror_mat, &reveal_mirror_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
-    printf("%sFinished render thread!\n",PR);
+    LOG("Finished render thread!\n");
 }
 void stop_render_thread(int dummy)
 {
@@ -260,6 +260,9 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 break;
             case 'f':
                 shared_memory->fastmode ^= 1;
+                break;
+            case 'p':
+                shared_memory->printing_wanted ^= 1;
                 break;
             case 'w': // toggle windowed / windowless
                 if(glfwGetWindowMonitor(*window)){

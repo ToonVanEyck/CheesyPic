@@ -28,14 +28,16 @@ git clone https://github.com/kbranigan/Simple-OpenGL-Image-Library
 git clone https://github.com/glfw/glfw
 ```
 
-
 Note:
 add the user to the lp group
 `sudo adduser $USER lp`
-change permissons
-`sudo chmod 777 /usr/lib/cups/backend/gutenprint53+usb`
 
 https://kernelmastery.com/enable-regular-users-to-add-printers-to-cups/
+
+disable gvfs-gphoto:
+systemctl --user stop gvfs-daemon
+systemctl --user mask gvfs-daemon
+
 
 commands:
 'c'     start capture

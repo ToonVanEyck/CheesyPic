@@ -5,7 +5,7 @@ int get_printer_driver_name(char **name)
     char buffer[1024];
     FILE *lpoptions = popen("lpoptions", "r");
     if(lpoptions == NULL){
-        fprintf(stderr,"failed to read lpoptions\n");
+        LOG("failed to read lpoptions\n");
         return 1;
     }
     fread (buffer, 1, 1024, lpoptions);
@@ -14,7 +14,7 @@ int get_printer_driver_name(char **name)
     regex_t regex;
     regmatch_t match[2];
     if(regcomp(&regex, "gutenprint53\\+usb:\\/\\/([^\\/]*)", REG_EXTENDED)){
-        fprintf(stderr,"failed to compile regex\n");
+        LOG("failed to compile regex\n");
         return 1;
     }
     int ret = regexec(&regex, buffer, 2, match, 0);
@@ -23,7 +23,7 @@ int get_printer_driver_name(char **name)
         *name = malloc(len+1);
         if(*name == NULL){
             regfree(&regex);
-            fprintf(stderr,"failed to allocate memory for printer driver name\n");
+            LOG("failed to allocate memory for printer driver name\n");
             return 1;
         }
         (*name)[len]=0;
@@ -33,7 +33,7 @@ int get_printer_driver_name(char **name)
         return 1;
     }else{
         regerror(ret, &regex, buffer, sizeof(buffer));
-        fprintf(stderr, "Regex match failed: %s\n", buffer);
+        LOG( "Regex match failed: %s\n", buffer);
         return 1;
     }
 
@@ -44,17 +44,17 @@ int get_printer_driver_name(char **name)
 int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info)
 {
     char buffer[1024]= {0};
-    sprintf(buffer,"BACKEND_STATS_ONLY=2 BACKEND=%s /usr/lib/cups/backend/gutenprint53+usb -s 2>&1",driver_name);
+    sprintf(buffer,"BACKEND_STATS_ONLY=2 BACKEND=%s ~/selphy_print/mitsu70x -s 2>&1",driver_name);
     FILE *gp = popen(buffer, "r");
     if (gp == NULL){
-        fprintf(stderr,"failed to get printer stats\n");
+        LOG("failed to get printer stats\n");
         return 1;
     }
     memset(buffer,0,1024);
     fread (buffer, 1, MAX_LEN, gp);
     if(feof(gp)){
         if(strstr(buffer,"Permission denied")){
-            fprintf(stderr,"Please make sure user has permission to execute (555 or 755) \"/usr/lib/cups/backend/gutenprint53+usb\"\n");
+            LOG("Please make sure user has permission to execute (555 or 755) \"~/selphy_print/mitsu70x\"\n");
             return 1;
         }else if(strstr(buffer,"No matching printers found")){
             printer_info->connected = 0;
@@ -87,7 +87,7 @@ int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info)
             }
         }
     }else{
-        fprintf(stderr,"error reading backend\n");
+        LOG("error reading backend\n");
         return 1;
     }
     pclose(gp);
@@ -98,7 +98,7 @@ int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info)
 int get_printer_stats(char *driver_name, printer_info_t *printer_info)
 {
     if(!strcmp(driver_name,"mitsubishi-9550dw")){
-        printf("printer not yet supported\n");
+        LOG("printer not yet supported\n");
         return 1;
     }
     if(!strcmp(driver_name,"mitsubishi-d70dw")){
@@ -112,7 +112,7 @@ int print_file(const char *file)
     sprintf(buffer,"lp %s",file);
     FILE *lp = popen(buffer, "r");
     if (lp == NULL){
-        fprintf(stderr,"failed to get printer stats\n");
+        LOG("failed to get printer stats\n");
         return 1;
     }
     pclose(lp);
@@ -159,12 +159,12 @@ int is_printing_finished(char *driver_name, printer_info_t *printer_info)
 
 //     char *pdn;
 //     get_printer_driver_name(&pdn);
-//     printf("driver: %s\n",pdn);
+//     LOG("driver: %s\n",pdn);
 //     get_printer_stats(pdn,&printer_info);
 //     if(printer_info.connected){
 //         print_file("print_me.jpg");
 //         while(!is_printing_finished(pdn,&printer_info));
 //     }
-//     printf("print finished\n");
+//     LOG("print finished\n");
 //     free(pdn);
 // }

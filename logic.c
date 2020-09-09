@@ -12,7 +12,7 @@ static unsigned long writeJpg(char *name, const char *data, unsigned long size){
     file = fopen(name, "wb+");
     if (!file)
     {
-        fprintf(stderr, "Unable to open file %s\n", name);
+        LOG("Unable to open file %s\n", name);
         return 1;
     }
     
@@ -56,7 +56,7 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
     read_config(config);
     session->capture_data = malloc(sizeof(char *)*config->design.total_photos);
     if(session->capture_data == NULL){
-        printf("Error couldn't allocate memory for session\n");
+        LOG("Error couldn't allocate memory for session\n");
         return 1;
     }
 
@@ -64,14 +64,14 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
         //nothing
     #else
         if(get_printer_driver_name(&config->printer_driver_name)){
-        printf("No default printer...\n");
+        LOG("No default printer...\n");
         return 1;
         }
         is_printing_finished(config->printer_driver_name,printer_info);
         if(!printer_info->connected){
-            printf("Error [%s] printer connected.\n",config->printer_driver_name);
-            return 1;
+            LOG("Error [%s] printer not connected.\n",config->printer_driver_name);
         } 
+        config->printer_active = 1;
     #endif
     return 0;
 }
@@ -88,7 +88,7 @@ int load_png_image(overlay_t *overlay)
                                         &overlay->width, 
                                         &overlay->height, 
                                         png, pngsize);
-    if(error) printf("error %u: %s\n", error, lodepng_error_text(error));
+    if(error) LOG("error %u: %s\n", error, lodepng_error_text(error));
     free(png);
     return error;
 }
@@ -166,30 +166,47 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
     static int prev_is_active = 2;
     if(prev_is_active != shared_memory->photobooth_active){
         prev_is_active = shared_memory->photobooth_active;
-        printf("%slogic active:   [%s]\n",PL,shared_memory->photobooth_active?"YES":"NO");
+        LOG("logic active:   [%s]\n",shared_memory->photobooth_active?"YES":"NO");
     }
 
     static int prev_preview_mirror = 2;
     if(prev_preview_mirror != shared_memory->preview_mirror){
         prev_preview_mirror = shared_memory->preview_mirror;
-        printf("%smirror preview: [%s]\n",PL,shared_memory->preview_mirror?"YES":"NO");
+        LOG("mirror preview: [%s]\n",shared_memory->preview_mirror?"YES":"NO");
     }
 
     static int prev_reveal_mirror = 2;
     if(prev_reveal_mirror != shared_memory->reveal_mirror){
         prev_reveal_mirror = shared_memory->reveal_mirror;
-        printf("%smirror reveal:  [%s]\n",PL,shared_memory->reveal_mirror?"YES":"NO");
+        LOG("mirror reveal:  [%s]\n",shared_memory->reveal_mirror?"YES":"NO");
     }
 
     static int prev_fastmode = 2;
     if(prev_fastmode != shared_memory->fastmode){
         prev_fastmode = shared_memory->fastmode;
-        printf("%sfast mode:      [%s]\n",PL,shared_memory->fastmode?"YES":"NO");        
+        LOG("fast mode:      [%s]\n",shared_memory->fastmode?"YES":"NO");        
+    }
+
+    static int prev_printing_wanted = 2;
+    if(prev_printing_wanted != shared_memory->printing_wanted){
+        prev_printing_wanted = shared_memory->printing_wanted;
+        if(shared_memory->printing_wanted){
+            is_printing_finished(config->printer_driver_name,printer_info);
+            if(printer_info->connected){
+                config->printer_active = 1;
+            }else{
+                config->printer_active = 0;
+            }
+        } else {
+            config->printer_active = 0;
+        }
+        LOG("printing wanted:[%s]\n",shared_memory->printing_wanted?"YES":"NO");     
+        if(shared_memory->printing_wanted) LOG("printing active:[%s]\n",config->printer_active?"YES":"NO");    
     }
 
     if(init_state){
         prev_logic_state = shared_memory->logic_state;
-        printf("%sEntered %s state!\n",PL,get_state_name(prev_logic_state));
+        LOG("Entered %s state!\n",get_state_name(prev_logic_state));
         // select overlays here!
         switch (shared_memory->logic_state){
             case log_idle:          set_image_overlay(&shared_memory->overlay_buffer,&config->idle);                        break;
@@ -255,7 +272,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 // handled in capture thread
                 if(init_state){
                     //for(int i = 0;i<NUM_JPEG_BUFFERS;i++)shared_memory->preview_buffer[0].pre_state = pre_render;
-                    printf("%scaptured %d/%d photos.\n",PL,session->photo_counter+1,config->design.total_photos);
+                    LOG("captured %d/%d photos.\n",session->photo_counter+1,config->design.total_photos);
                     session->photo_counter++;
                 }
                 break;
@@ -283,10 +300,10 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                     // encode base64 image
                     /* set up a destination buffer large enough to hold the encoded data */
                     int encoded_size = 32 + 2*shared_memory->capture_buffer.size;
-                    printf("original size %ld --> base 64size %d\n",shared_memory->capture_buffer.size,encoded_size);
+                    LOG("original size %ld --> base 64size %d\n",shared_memory->capture_buffer.size,encoded_size);
                     session->capture_data[session->photo_counter-1] = malloc(encoded_size);
                     if(session->capture_data[session->photo_counter-1] == NULL){
-                        fprintf(stderr,"failed to allocate memory for capture copy");
+                        LOG("failed to allocate memory for capture copy");
                         exit(1);
                     }
                     strcpy(session->capture_data[session->photo_counter-1],"data:image/jpeg;base64,");
@@ -313,7 +330,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                     *c = 0;
 
                     // FILE *fp = fopen("base64.txt", "w");
-                    // fprintf(fp,"%s",session->capture_data[session->photo_counter-1]);
+                    // fLOG(fp,"%s",session->capture_data[session->photo_counter-1]);
                     // fclose(fp);
 
                     shared_memory->capture_buffer.jpeg_copied = 1;
@@ -335,14 +352,14 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                         // source = fopen("../kittens/2.jpg", "rb");
                         // if( source == NULL )
                         // {
-                        //     printf("Failed to open src file...\n");
+                        //     LOG("Failed to open src file...\n");
                         //     break;
                         // }
                         // target = fopen("print_me.jpg", "wb+");
                         // if( target == NULL )
                         // {
                         //     fclose(source);
-                        //     printf("Failed to open dest file...\n");
+                        //     LOG("Failed to open dest file...\n");
                         //     break;
                         // }
                         // size_t n, m;
@@ -353,15 +370,15 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                         //     else   m = 0;
                         // } while ((n > 0) && (n == m));
                         // if (m) perror("copy");
-                        // printf("File copied successfully.\n");
+                        // LOG("File copied successfully.\n");
                         // fclose(source);
                         // fclose(target);
                 }
-                #ifdef NO_PRINT
-                    shared_memory->logic_state = log_idle;
-                #else
-                    shared_memory->logic_state = log_print;
-                #endif
+                    if(config->printer_active){
+                        shared_memory->logic_state = log_print;
+                    }else{
+                        shared_memory->logic_state = log_idle;
+                    }
                 break;
 
             case log_print:

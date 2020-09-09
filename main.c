@@ -1,18 +1,18 @@
+#include "logic.h"
 #include "render_thread.h"
 #include "decode_thread.h"
 #include "capture_thread.h"
-#include "logic.h"
 #include "shared_memory.h"
 
 int main(int argc, char *argv[])
 {
     #ifdef NO_CAM
-        printf("Not using camera!\n");
+        LOG("Not using camera!\n");
     #endif
     // check requirments
 
     // setup ipc
-    printf("allocating %ld bytes of shared memory.\n",sizeof(shared_memory_t));
+    LOG("allocating %ld bytes of shared memory.\n",sizeof(shared_memory_t));
     shared_memory_t *shared_memory = mmap(NULL, sizeof(shared_memory_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     // init semaphores
     sem_init(&shared_memory->sem_decode,0,0);
@@ -30,13 +30,13 @@ int main(int argc, char *argv[])
     if(init_logic(shared_memory, &config, &session, &printer_info)) goto cleanup;
     // start threads
     pid_t capture_pid = fork();
-    printf("capture_pid %d -- %d\n",capture_pid,getpid());
+    LOG("capture_pid %d -- %d\n",capture_pid,getpid());
     if(!capture_pid){
         start_capture_thread(shared_memory);
         exit(0);
     }
     pid_t render_pid = fork();
-    printf("render_pid %d -- %d\n",render_pid,getpid());
+    LOG("render_pid %d -- %d\n",render_pid,getpid());
     if(!render_pid){
         start_render_thread(shared_memory);
         return 0;
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     }
     //cleanup code
     sleep(1);
-    printf("\033[0mKilling all threads\n");
+    LOG("Killing all threads\n");
     //kill other threads
     if(capture_pid)kill(capture_pid,SIGINT);
     if(render_pid)kill(render_pid,SIGINT);
