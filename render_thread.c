@@ -126,7 +126,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
     primaryMonitor = glfwGetPrimaryMonitor();
-    *window = glfwCreateWindow(600, 400, "CheesyPic Photobooth by ToonVanEyck", NULL/*glfwGetPrimaryMonitor()*/, NULL);
+    *window = glfwCreateWindow(600, 400, "CheesyPic Photobooth by ToonVanEyck", WINDOW?NULL:primaryMonitor, NULL);
     if (!*window)
     {
         glfwTerminate();

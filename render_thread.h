@@ -24,6 +24,14 @@
 #define LOG(...) do{fprintf(stderr,"render: ");fprintf(stderr, __VA_ARGS__);}while(0)
 #endif
 
+#ifdef START_WINDOWED
+    #define WINDOW 1
+#else
+    #define WINDOW 0
+#endif
+    
+
+
 #include "decode_thread.h"
 #include "shared_memory.h"
 #include "linmath.h"
