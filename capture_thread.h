@@ -41,5 +41,6 @@ void clean_capture_thread(struct pollfd *fds, int *numfd, GPContext **ctx, Camer
 int init_timer(struct pollfd *fds, int *numfd);
 int init_camera(GPContext **ctx, Camera **camera);
 void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera);
+int camera_error_handler(GPContext **ctx, Camera **camera, int error_code);
 
 #endif

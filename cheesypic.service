@@ -6,7 +6,7 @@ After=network.target
 Environment="DISPLAY=:0"
 Environment="XAUTHORITY=/home/pi/.Xauthority"
 ExecStart=/home/pi/cheesypic_photobooth/build/photobooth
-#WorkingDirectory=/home/pi/cheesypic_photobooth/build
+WorkingDirectory=/home/pi/cheesypic_photobooth/build
 StandardOutput=journal
 StandardError=journal
 Restart=always
