@@ -4,6 +4,8 @@
 #include "capture_thread.h"
 #include "shared_memory.h"
 
+
+
 int main(int argc, char *argv[])
 {
     #ifdef NO_CAM
@@ -11,6 +13,13 @@ int main(int argc, char *argv[])
     #endif
     // check requirments
 
+    if(argc != 2){
+        LOG("ERROR: Please supply a design directory.\n");
+        return 1;
+    }
+    char design_path[512]={0};
+    if(get_lates_design(argv[1],design_path)) return 1;
+    printf("%s\n",design_path);
     // setup ipc
     LOG("allocating %ld bytes of shared memory.\n",sizeof(shared_memory_t));
     shared_memory_t *shared_memory = mmap(NULL, sizeof(shared_memory_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -27,7 +36,7 @@ int main(int argc, char *argv[])
     printer_info_t printer_info;
     photobooth_config_t config;
     photobooth_session_t session;
-    if(init_logic(shared_memory, &config, &session, &printer_info)) goto cleanup;
+    if(init_logic(shared_memory, &config, &session, &printer_info, design_path)) goto cleanup;
     // start threads
     pid_t capture_pid = fork();
     LOG("capture_pid %d -- %d\n",capture_pid,getpid());

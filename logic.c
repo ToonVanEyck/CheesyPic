@@ -40,7 +40,7 @@ char* get_state_name(logic_state_t i)
     return "UNDEFINED";
 }
 
-int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info)
+int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info, char *design_path)
 {
     signal(SIGALRM, alarm_capture);
 
@@ -53,7 +53,10 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
     memset(session,0,sizeof(photobooth_session_t));
     config->preview_mirror = &shared_memory->preview_mirror;
     config->reveal_mirror = &shared_memory->reveal_mirror;
-    read_config(config);
+    if(read_config(config,design_path)){
+        LOG("Error failed to configure the photobooth with the given design\n");
+        return 1;
+    }
     session->capture_data = malloc(sizeof(char *)*config->design.total_photos);
     if(session->capture_data == NULL){
         LOG("Error couldn't allocate memory for session\n");
@@ -116,7 +119,7 @@ void free_logic(photobooth_config_t *config, printer_info_t *printer_info)
     printer_info->deck = NULL;
 }
 
-int read_config(photobooth_config_t *config)
+int read_config(photobooth_config_t *config, char *design_path)
 {
     config->countdown.type = image_png;
     config->countdown.data.image.cd_3.path = "../overlays/3.png";
@@ -131,22 +134,30 @@ int read_config(photobooth_config_t *config)
     //config->num_photos_in_design = 3;
     
     //load png resources
-    if(load_png_image(&config->countdown.data.image.cd_3)) return -1;
-    if(load_png_image(&config->countdown.data.image.cd_2)) return -1;
-    if(load_png_image(&config->countdown.data.image.cd_1)) return -1;
-    if(load_png_image(&config->idle)) return -1;
-    if(load_png_image(&config->print)) return -1;
-    if(load_png_image(&config->smile)) return -1;
+    if(load_png_image(&config->countdown.data.image.cd_3)) return 1;
+    if(load_png_image(&config->countdown.data.image.cd_2)) return 1;
+    if(load_png_image(&config->countdown.data.image.cd_1)) return 1;
+    if(load_png_image(&config->idle)) return 1;
+    if(load_png_image(&config->print)) return 1;
+    if(load_png_image(&config->smile)) return 1;
 
     config->preview_time.it_value.tv_sec = 3;
     *config->preview_mirror = 1;
     *config->reveal_mirror = 1;
 
-    //output parameters
-    config->photo_output_directory = "/home/toon/Pictures/Cheesypic/Default";
-    config->photo_output_name = "cheesypic_default";
+    if(load_design_from_file(&config->design, design_path)) return 1;
 
-    load_design_from_file(&config->design, "../design_template.svg");
+    //output parameters
+    char *split1 = strrchr(design_path,'/');
+    //*split1 = 0;
+    char *split2 = strrchr(split1+1,'.');
+    *split2 = 0;
+    strcpy(split2+1,split1+1);
+    config->photo_output_directory = design_path;
+    config->photo_output_name = split1+1;
+    mkdir(config->photo_output_directory,0777);
+
+    return 0;
 }
 
 void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
@@ -385,4 +396,38 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
         }
     }
+}
+
+int get_lates_design(char *dir_path,char *design_path)
+{
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(dir_path);
+    if(d)
+    {
+        time_t most_recent = 0;
+        while ((dir = readdir(d)) != NULL)
+        {
+            if(dir->d_type != DT_REG)continue;
+            char path[512]={0};
+            struct stat file_stats = {0};
+            strncpy(path,dir_path,255);
+            strncat(path,"/",2);
+            strncat(path,dir->d_name,255);
+            stat(path,&file_stats);
+            if( strstr(path,".svg") && file_stats.st_mtim.tv_sec > most_recent){
+                most_recent = file_stats.st_mtim.tv_sec;
+                strcpy(design_path,path);
+            }          
+        }
+        closedir(d);
+        if(design_path[0]==0){
+            LOG("ERROR: \"%s\" does not contain a design.\n",dir_path);
+            return 1;
+        }
+    }else{
+        LOG("ERROR: \"%s\" is not a valid directory.\n",dir_path);
+        return 1;
+    }
+    return 0;
 }
