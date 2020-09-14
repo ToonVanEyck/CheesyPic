@@ -60,19 +60,17 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
         return 1;
     }
 
-    #ifdef NO_PRINT
-        //nothing
-    #else
-        if(get_printer_driver_name(&config->printer_driver_name)){
-        LOG("No default printer...\n");
-        return 1;
-        }
-        is_printing_finished(config->printer_driver_name,printer_info);
-        if(!printer_info->connected){
-            LOG("Error [%s] printer not connected.\n",config->printer_driver_name);
-        } 
-        config->printing_enabled = 1;
-    #endif
+    if(get_printer_driver_name(&config->printer_driver_name)){
+    LOG("No default printer...\n");
+    return 1;
+    }
+    is_printing_finished(config->printer_driver_name,printer_info);
+    if(!printer_info->connected){
+        LOG("Error [%s] printer not connected.\n",config->printer_driver_name);
+    } 
+    config->printing_enabled = 0;
+    shared_memory->toggle_printer = 1;
+
     return 0;
 }
 
@@ -196,7 +194,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
             config->printing_enabled = 0;
         }
         LOG("printer connected:[%s]\n",printer_info->connected?"YES":"NO");     
-        if(shared_memory->toggle_printer) LOG("printing enabled:[%s]\n",config->printing_enabled?"YES":"NO");    
+        if(printer_info->connected) LOG("printing enabled:[%s]\n",config->printing_enabled?"YES":"NO");    
     }
 
     if(init_state){
