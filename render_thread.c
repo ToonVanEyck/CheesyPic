@@ -133,7 +133,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
         exit(EXIT_FAILURE);
     }
 
-    
+    glfwSetInputMode(*window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwSetKeyCallback(*window, key_callback);
 
