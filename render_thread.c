@@ -262,7 +262,7 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 shared_memory->fastmode ^= 1;
                 break;
             case 'p':
-                shared_memory->printing_wanted ^= 1;
+                shared_memory->toggle_printer ^= 1;
                 break;
             case 'w': // toggle windowed / windowless
                 if(glfwGetWindowMonitor(*window)){

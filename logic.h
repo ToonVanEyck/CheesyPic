@@ -65,7 +65,7 @@ typedef struct{
     struct itimerval preview_time;
     unsigned char *preview_mirror;
     unsigned char *reveal_mirror;
-    unsigned char printer_active;
+    unsigned char printing_enabled;
     char *printer_driver_name;
     char *photo_output_directory;
     char *photo_output_name;

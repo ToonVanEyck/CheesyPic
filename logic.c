@@ -71,7 +71,7 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
         if(!printer_info->connected){
             LOG("Error [%s] printer not connected.\n",config->printer_driver_name);
         } 
-        config->printer_active = 1;
+        config->printing_enabled = 1;
     #endif
     return 0;
 }
@@ -187,21 +187,16 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
         LOG("fast mode:      [%s]\n",shared_memory->fastmode?"YES":"NO");        
     }
 
-    static int prev_printing_wanted = 2;
-    if(prev_printing_wanted != shared_memory->printing_wanted){
-        prev_printing_wanted = shared_memory->printing_wanted;
-        if(shared_memory->printing_wanted){
-            is_printing_finished(config->printer_driver_name,printer_info);
-            if(printer_info->connected){
-                config->printer_active = 1;
-            }else{
-                config->printer_active = 0;
-            }
-        } else {
-            config->printer_active = 0;
+    if(shared_memory->toggle_printer){
+        shared_memory->toggle_printer = 0;
+        is_printing_finished(config->printer_driver_name,printer_info);
+        if(printer_info->connected){
+            config->printing_enabled ^= 1;
+        }else{
+            config->printing_enabled = 0;
         }
-        LOG("printing wanted:[%s]\n",shared_memory->printing_wanted?"YES":"NO");     
-        if(shared_memory->printing_wanted) LOG("printing active:[%s]\n",config->printer_active?"YES":"NO");    
+        LOG("printer connected:[%s]\n",printer_info->connected?"YES":"NO");     
+        if(shared_memory->toggle_printer) LOG("printing enabled:[%s]\n",config->printing_enabled?"YES":"NO");    
     }
 
     if(init_state){
@@ -374,7 +369,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                         // fclose(source);
                         // fclose(target);
                 }
-                    if(config->printer_active){
+                    if(config->printing_enabled){
                         shared_memory->logic_state = log_print;
                     }else{
                         shared_memory->logic_state = log_idle;
