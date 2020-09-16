@@ -67,6 +67,7 @@ typedef struct{
     unsigned char preview_mirror;
     unsigned char reveal_mirror;
     unsigned char toggle_printer;
+    unsigned char exit_slow;
     int camera_error;
     sem_t sem_decode;
     sem_t sem_render;

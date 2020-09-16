@@ -47,3 +47,4 @@ commands:
 'm'     toggle mirror reveal
 'f'     toggle fast mode
 'w'     toggle windowed / fulscreen mode
+'s'     exit but wait 15s before stopping

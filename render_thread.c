@@ -119,8 +119,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
 
     glfwSetErrorCallback(error_callback);
 
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
+    if (!glfwInit()) exit(EXIT_FAILURE);
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -274,6 +273,10 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                     glfwGetMonitorWorkarea(primaryMonitor,NULL,NULL,&width,&height);
                     glfwSetWindowMonitor(*window,primaryMonitor,0,0,width,height,GLFW_DONT_CARE);
                 }
+                break;
+            case 's':
+                glfwSetWindowShouldClose(*window, GLFW_TRUE);
+                shared_memory->exit_slow = 1;
                 break;
             default:
                 break;
