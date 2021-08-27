@@ -297,6 +297,9 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
         mirror_preview[0][0] = (shared_memory->preview_mirror==1)?(-1):(1);
 
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
+        #if DEBUG
+            clock_t runtime_begin = clock();
+        #endif
             if(shared_memory->logic_state != log_reveal  || !shared_memory->photobooth_active){
                 //  -------- PREVIEW LOGIC --------
                 for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
@@ -336,6 +339,10 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                 glfwSwapBuffers(*window);
             }
+            #if DEBUG
+            clock_t runtime_end = clock();
+                shared_memory->debug_info.render_thread_runtime = (double)(runtime_end - runtime_begin) / CLOCKS_PER_SEC;
+            #endif
         }
         if(button_pushed != 0) button_pushed = 0;
         sem_post(&shared_memory->sem_logic);

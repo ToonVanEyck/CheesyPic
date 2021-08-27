@@ -21,8 +21,6 @@ wget https://sourceforge.net/projects/gimp-print/files/gutenprint-5.3/5.3.3/gute
 tar -xf gutenprint-5.3.3.tar.xz
 #./configure --> make --> make install
 
-
-
 git clone git://git.shaftnet.org/selphy_print.git
 git clone https://github.com/kbranigan/Simple-OpenGL-Image-Library
 git clone https://github.com/glfw/glfw
@@ -39,12 +37,13 @@ systemctl --user stop gvfs-daemon
 systemctl --user mask gvfs-daemon
 
 
-commands:
-'c'     start capture
-'a'     toggle active / inactive logic
-'+'/'-' cycle states
-'l'     toggle mirror liveview
-'m'     toggle mirror reveal
-'f'     toggle fast mode
-'w'     toggle windowed / fulscreen mode
-'s'     exit but wait 15s before stopping
+commands | Discription
+---------|---------------------------------
+'c'      | start capture
+'a'      | toggle active / inactive logic
+'+'/'-'  | cycle states
+'l'      | toggle mirror liveview
+'m'      | toggle mirror reveal
+'f'      | toggle fast mode
+'w'      | toggle windowed / fulscreen mode
+'s'      | exit but wait 15s before stopping

@@ -188,6 +188,10 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
     if(prev_reveal_mirror != shared_memory->reveal_mirror){
         prev_reveal_mirror = shared_memory->reveal_mirror;
         LOG("mirror reveal:  [%s]\n",shared_memory->reveal_mirror?"YES":"NO");
+        LOG("cap:%f\ndec:%f\nren:%f\n",
+            shared_memory->debug_info.capture_thread_runtime,
+            shared_memory->debug_info.decode_thread_runtime,
+            shared_memory->debug_info.render_thread_runtime);
     }
 
     static int prev_fastmode = 2;

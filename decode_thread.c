@@ -42,6 +42,9 @@ void run_decode_thread(shared_memory_t *shared_memory)
 {
     while(decodeRunning){ 
         sem_wait(&shared_memory->sem_decode);
+        #if DEBUG
+            clock_t runtime_begin = clock();
+        #endif
         if(shared_memory->logic_state != log_decode || !shared_memory->photobooth_active){
             // -------- PREVIEW LOGIC --------
             for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
@@ -106,6 +109,10 @@ void run_decode_thread(shared_memory_t *shared_memory)
             }
             tjDestroy(_jpegDecompressor);
         }
+        #if DEBUG
+            clock_t runtime_end = clock();
+            shared_memory->debug_info.decode_thread_runtime = (double)(runtime_end - runtime_begin) / CLOCKS_PER_SEC;
+        #endif
         sem_post(&shared_memory->sem_render);
     }
 }
