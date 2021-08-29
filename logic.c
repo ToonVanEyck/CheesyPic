@@ -64,8 +64,8 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
     }
 
     if(get_printer_driver_name(&config->printer_driver_name)){
-    LOG("No default printer...\n");
-    return 1;
+        LOG("No default printer...\n");
+        return 1;
     }
     is_printing_finished(config->printer_driver_name,printer_info);
     if(!printer_info->connected){

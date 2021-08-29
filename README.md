@@ -14,14 +14,33 @@ sudo apt install libb64-dev
 sudo apt install libgtk-3-dev
 sudo apt install libusb-1.0-0-dev
 
+sudo apt install mesa-utils
+
 #install cups
 sudo apt install cups
 sudo apt install libcups2-dev
-wget https://sourceforge.net/projects/gimp-print/files/gutenprint-5.3/5.3.3/gutenprint-5.3.3.tar.xz
-tar -xf gutenprint-5.3.3.tar.xz
-#./configure --> make --> make install
-
-git clone git://git.shaftnet.org/selphy_print.git
+#mabe needed
+wget https://git.shaftnet.org/cgit/selphy_print.git/snapshot/selphy_print-gutenprint_5.3.4.tar.gz
+tar -xf gutenprint-5.3.4.tar.xz
+cd gutenprint-5.3.4
+./configure
+make
+sudo make install
+cd..
+#deff needed
+git clone https://git.shaftnet.org/cgit/selphy_print.git/
+cd selphy_print
+make
+sudo make install
+cd lib70x
+make
+sudo make install
+sudo bash
+echo '/usr/local/lib' >> /etc/ld.so.conf.d/local.conf
+ldconfig
+exit
+cd ..
+# misc
 git clone https://github.com/kbranigan/Simple-OpenGL-Image-Library
 git clone https://github.com/glfw/glfw
 ```

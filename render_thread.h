@@ -16,9 +16,6 @@
 // #include <unistd.h>
 // #include <pthread.h>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #define PR "\033[0;35m"
 #ifndef LOG
 #define LOG(...) do{fprintf(stderr,"render: ");fprintf(stderr, __VA_ARGS__);}while(0)
@@ -29,8 +26,6 @@
 #else
     #define WINDOW 0
 #endif
-    
-
 
 #include "decode_thread.h"
 #include "shared_memory.h"
@@ -39,9 +34,5 @@
 
 void start_render_thread(shared_memory_t *shared_memory);
 void stop_render_thread(int dummy);
-
-int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *preview_mirror_mat ,GLuint *reveal_mirror_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
-void cleanup_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *preview_mirror_mat ,GLuint *reveal_mirror_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
-void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat ,GLuint preview_mirror_mat ,GLuint reveal_mirror_mat);
 
 #endif

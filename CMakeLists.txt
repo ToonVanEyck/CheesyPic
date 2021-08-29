@@ -6,11 +6,11 @@ project(cheesypic   VERSION     1.0
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 
-add_definitions(-DNO_CAM)
-add_definitions(-DNO_PRINT)
+# add_definitions(-DNO_CAM)
+# add_definitions(-DNO_PRINT)
 # add_definitions(-DNO_SAVE)
 # add_definitions(-DFAST_MODE)
-add_definitions(-DSTART_WINDOWED)
+# add_definitions(-DSTART_WINDOWED)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
@@ -45,10 +45,13 @@ include_directories(.
     ${LibRSVG_INCLUDE_DIR}
     ${GDK-PixBuf_INCLUDE_DIR}
     ${Cairo_INCLUDE_DIR}
-    ${B64_INCLUSDE_DIR})
+    ${B64_INCLUSDE_DIR}
+    "glfw/deps")
 
 # PHOTOBOOTH
-add_executable(photobooth main.c glad.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c design.c)
+add_executable(photobooth main.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c design.c )
+target_link_libraries(photobooth glfw)
+target_link_libraries(photobooth OpenGL::GL)
 target_link_libraries(photobooth ${Gphoto2_LIBRARIES})
 target_link_libraries(photobooth ${TurboJPEG_LIBRARIES})
 target_link_libraries(photobooth ${JSONC_LIBRARY} )
@@ -56,19 +59,22 @@ target_link_libraries(photobooth ${LIBXML2_LIBRARIES})
 target_link_libraries(photobooth ${GTK_LIBRARIES})
 target_link_libraries(photobooth ${LibRSVG_LIBRARIES})
 target_link_libraries(photobooth ${B64_LIBRARIES})
-target_link_libraries(photobooth glfw)
-target_link_libraries(photobooth OpenGL::GL)
+
+# # RENDER EXAMPLE
+# add_executable(render_jpeg render_jpg.c glad.c)
+# target_link_libraries(render_jpeg  ${Gphoto2_LIBRARIES})
+# target_link_libraries(render_jpeg  ${TurboJPEG_LIBRARIES})
+# target_link_libraries(render_jpeg glfw)
+# target_link_libraries(render_jpeg OpenGL::GL)
+
+# # SVG RENDER EXAMPLE
+# add_executable(svg_render svg_to_png.c design.c lodepng.c)
+# target_link_libraries(svg_render ${GTK_LIBRARIES})
+# target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
+# target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
+# target_link_libraries(svg_render ${B64_LIBRARIES})
 
 # RENDER EXAMPLE
-add_executable(render_jpeg render_jpg.c glad.c)
-target_link_libraries(render_jpeg  ${Gphoto2_LIBRARIES})
-target_link_libraries(render_jpeg  ${TurboJPEG_LIBRARIES})
-target_link_libraries(render_jpeg glfw)
-target_link_libraries(render_jpeg OpenGL::GL)
-
-# SVG RENDER EXAMPLE
-add_executable(svg_render svg_to_png.c design.c lodepng.c)
-target_link_libraries(svg_render ${GTK_LIBRARIES})
-target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
-target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
-target_link_libraries(svg_render ${B64_LIBRARIES})
+add_executable(triangles triangles.c)
+target_link_libraries(triangles glfw)
+target_link_libraries(triangles OpenGL::GL)
