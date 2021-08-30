@@ -46,10 +46,13 @@ include_directories(.
     ${GDK-PixBuf_INCLUDE_DIR}
     ${Cairo_INCLUDE_DIR}
     ${B64_INCLUSDE_DIR}
-    "glfw/deps")
+    "glfw/deps"
+    "include")
+
+
 
 # PHOTOBOOTH
-add_executable(photobooth main.c capture_thread.c decode_thread.c render_thread.c logic.c lodepng.c printer.c design.c )
+add_executable(photobooth src/main.c src/capture_thread.c src/decode_thread.c src/render_thread.c src/logic.c src/lodepng.c src/printer.c src/design.c )
 target_link_libraries(photobooth glfw)
 target_link_libraries(photobooth OpenGL::GL)
 target_link_libraries(photobooth ${Gphoto2_LIBRARIES})
@@ -60,21 +63,21 @@ target_link_libraries(photobooth ${GTK_LIBRARIES})
 target_link_libraries(photobooth ${LibRSVG_LIBRARIES})
 target_link_libraries(photobooth ${B64_LIBRARIES})
 
-# # RENDER EXAMPLE
-# add_executable(render_jpeg render_jpg.c glad.c)
-# target_link_libraries(render_jpeg  ${Gphoto2_LIBRARIES})
-# target_link_libraries(render_jpeg  ${TurboJPEG_LIBRARIES})
-# target_link_libraries(render_jpeg glfw)
-# target_link_libraries(render_jpeg OpenGL::GL)
+# RENDER EXAMPLE
+add_executable(render_jpeg src/render_jpg.c)
+target_link_libraries(render_jpeg  ${Gphoto2_LIBRARIES})
+target_link_libraries(render_jpeg  ${TurboJPEG_LIBRARIES})
+target_link_libraries(render_jpeg glfw)
+target_link_libraries(render_jpeg OpenGL::GL)
 
-# # SVG RENDER EXAMPLE
-# add_executable(svg_render svg_to_png.c design.c lodepng.c)
-# target_link_libraries(svg_render ${GTK_LIBRARIES})
-# target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
-# target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
-# target_link_libraries(svg_render ${B64_LIBRARIES})
+# SVG RENDER EXAMPLE
+add_executable(svg_render src/svg_to_png.c src/design.c src/lodepng.c)
+target_link_libraries(svg_render ${GTK_LIBRARIES})
+target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
+target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
+target_link_libraries(svg_render ${B64_LIBRARIES})
 
 # RENDER EXAMPLE
-add_executable(triangles triangles.c)
+add_executable(triangles src/triangles.c)
 target_link_libraries(triangles glfw)
 target_link_libraries(triangles OpenGL::GL)

@@ -48,7 +48,7 @@ git clone https://github.com/glfw/glfw
 
 Note:
 add the user to the lp group
-`sudo adduser $USER lp`
+`sudo adduser $USER lp
 
 Setup of button DTO 
 
@@ -61,7 +61,7 @@ dtoverlay=photobooth_button
 https://kernelmastery.com/enable-regular-users-to-add-printers-to-cups/
 
 disable gvfs-gphoto:
-systemctl --user stop gvfs-daemon
+sudo systemctl mask gvfs-daemon
 systemctl --user mask gvfs-daemon
 
 
