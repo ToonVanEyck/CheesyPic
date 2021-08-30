@@ -31,6 +31,7 @@ char* get_state_name(logic_state_t i)
         "\"countdown_1\"",
         "\"capture\"",
         "\"decode\"",
+        "\"capture_failed\"",
         "\"reveal\"",
         "\"procces\"",
         "\"print\""};
@@ -105,10 +106,12 @@ void free_logic(photobooth_config_t *config, printer_info_t *printer_info)
     config->countdown.data.image.cd_2.data = NULL;
     free(config->idle.data);
     config->idle.data = NULL;
-    free(config->print.data);
-    config->print.data = NULL;
     free(config->smile.data);
     config->smile.data = NULL;
+    free(config->capture_failed.data);
+    config->capture_failed.data = NULL;
+    free(config->print.data);
+    config->print.data = NULL;
     if(config->printer_driver_name){
         free(config->printer_driver_name);
         config->printer_driver_name = NULL;
@@ -126,8 +129,9 @@ int read_config(photobooth_config_t *config, char *design_path)
     config->countdown.data.image.cd_2.path = "../overlays/2.png";
     config->countdown.data.image.cd_1.path = "../overlays/1.png";
     config->idle.path = "../overlays/push.png";
-    config->print.path = "../overlays/printing.png";
     config->smile.path = "../overlays/smile.png";
+    config->capture_failed.path = "../overlays/smile.png";
+    config->print.path = "../overlays/printing.png";
 
     config->countdown.data.image.delay.it_value.tv_sec = 1;
 
@@ -138,8 +142,9 @@ int read_config(photobooth_config_t *config, char *design_path)
     if(load_png_image(&config->countdown.data.image.cd_2)) return 1;
     if(load_png_image(&config->countdown.data.image.cd_1)) return 1;
     if(load_png_image(&config->idle)) return 1;
-    if(load_png_image(&config->print)) return 1;
     if(load_png_image(&config->smile)) return 1;
+    if(load_png_image(&config->capture_failed)) return 1;
+    if(load_png_image(&config->print)) return 1;
 
     config->preview_time.it_value.tv_sec = 3;
     *config->preview_mirror = 1;
@@ -223,6 +228,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
             case log_countdown_2:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_2);   break;
             case log_countdown_1:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_1);   break;
             case log_capture:       set_image_overlay(&shared_memory->overlay_buffer,&config->smile);                       break;
+            case log_capture_failed:set_image_overlay(&shared_memory->overlay_buffer,&config->capture_failed);              break;
             case log_reveal:                                                                                                break; //the captured image is shown instead of the overlay
             case log_procces:       set_image_overlay(&shared_memory->overlay_buffer,&config->print);                       break;
             default:                                                                                                        break;
@@ -280,12 +286,23 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 // handled in capture thread
                 if(init_state){
                     //for(int i = 0;i<NUM_JPEG_BUFFERS;i++)shared_memory->preview_buffer[0].pre_state = pre_render;
-                    LOG("captured %d/%d photos.\n",session->photo_counter+1,config->design.total_photos);
-                    session->photo_counter++;
+                    // LOG("captured %d/%d photos.\n",session->photo_counter+1,config->design.total_photos);
+                    // session->photo_counter++;
+                }
+                break;
+            case log_capture_failed:
+                if(init_state){
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown.data.image.delay,NULL);
+                }
+                if(alarm_var){
+                    shared_memory->logic_state = log_countdown_3;
+                    alarm_var = 0;
                 }
                 break;
             case log_decode:
                 if(init_state){
+                    LOG("captured %d/%d photos.\n",session->photo_counter+1,config->design.total_photos);
+                    session->photo_counter++;
                 }
                 // handled in decode thread
                 break;
