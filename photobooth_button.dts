@@ -1,22 +1,21 @@
 /dts-v1/;
 /plugin/;
 / {
-    compatible = "brcm,bcm2835", "brcm,bcm2708", "brcm,bcm2709";
-    
-    fragment@0 {
-        target-path = "/";
-        __overlay__ {
-            keypad: breadboard_keys {
-            compatible = "gpio-keys";
-            #address-cells = <1>;
-            #size-cells = <0>;
-    autorepeat;
-            button@22 {
-                label = "photobooth capture";
-                linux,code = <46>;
-                gpios = <&gpio 24 1>;
-            };
-            };
-        };
-    };
+	compatible = "brcm,bcm2835", "brcm,bcm2708", "brcm,bcm2709";
+	
+	fragment@0 {
+		target-path = "/soc";
+		__overlay__ {
+			keypad: keypad {
+				compatible = "gpio-keys";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				button@1{
+					label = "photobooth capture";
+					linux,code = <46>;
+					gpios = <&gpio 1 1>;
+				};
+			};
+		};
+	};
 };

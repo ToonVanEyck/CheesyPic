@@ -13,6 +13,7 @@ sudo apt install librsvg2-dev
 sudo apt install libb64-dev 
 sudo apt install libgtk-3-dev
 sudo apt install libusb-1.0-0-dev
+sudo apt install xorg-dev #maybe
 
 sudo apt install mesa-utils
 
@@ -49,11 +50,21 @@ Note:
 add the user to the lp group
 `sudo adduser $USER lp`
 
+Setup of button DTO 
+
+```bash
+sudo dtc -I dts -O dtb -o /boot/overlays/photobooth_button.dtbo photobooth_button.dts
+```
+inally the following line must be added to /boot/config.txt:
+dtoverlay=photobooth_button
+
 https://kernelmastery.com/enable-regular-users-to-add-printers-to-cups/
 
 disable gvfs-gphoto:
 systemctl --user stop gvfs-daemon
 systemctl --user mask gvfs-daemon
+
+
 
 
 commands | Discription
