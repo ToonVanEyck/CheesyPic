@@ -88,6 +88,6 @@ int load_png_image(overlay_t *overlay);
 void free_logic(photobooth_config_t *config, printer_info_t *printer_info);
 int read_config(photobooth_config_t *config, char *design_path);
 void run_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info);
-int get_lates_design(char *dir_path,char *design_path);
+int get_latest_design(char *dir_path,char *design_path);
 
 #endif

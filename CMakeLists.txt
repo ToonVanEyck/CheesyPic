@@ -77,7 +77,11 @@ target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
 target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
 target_link_libraries(svg_render ${B64_LIBRARIES})
 
-# RENDER EXAMPLE
+# GLES EXAMPLE
 add_executable(triangles src/triangles.c)
 target_link_libraries(triangles glfw)
 target_link_libraries(triangles OpenGL::GL)
+
+# GTK EXAMPLE
+add_executable(gtk src/gtk_test.c)
+target_link_libraries(gtk ${GTK_LIBRARIES})

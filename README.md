@@ -64,6 +64,9 @@ disable gvfs-gphoto:
 sudo systemctl mask gvfs-daemon
 systemctl --user mask gvfs-daemon
 
+Automatic boot:
+---------------
+https://die-antwort.eu/techblog/2017-12-setup-raspberry-pi-for-kiosk-mode/
 
 
 

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     char design_path[512]={0};
-    if(get_lates_design(argv[1],design_path)) exit(EXIT_FAILURE);
+    if(get_latest_design(argv[1],design_path)) exit(EXIT_FAILURE);
     // setup ipc
     LOG("allocating %ld bytes of shared memory.\n",sizeof(shared_memory_t));
     shared_memory_t *shared_memory = mmap(NULL, sizeof(shared_memory_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);

@@ -103,6 +103,18 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 
+static void window_focus_callback(GLFWwindow* window, int focused)
+{
+    if (focused)
+    {
+        // The window gained input focus
+    }
+    else
+    {
+        glfwFocusWindow(window);
+    }
+}
+
 void start_render_thread(shared_memory_t *shared_memory)
 {
     LOG("Started render thread!\n");
@@ -143,8 +155,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
 
     if (!glfwInit()) exit(EXIT_FAILURE);
 
-    // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    // glfwWindowHint(GLFW_FLOATING , GLFW_TRUE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -162,9 +173,10 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     glfwSetInputMode(*window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwSetKeyCallback(*window, key_callback);
+    glfwSetWindowFocusCallback(*window, window_focus_callback);
 
     glfwMakeContextCurrent(*window);
-    // gladLoadGL();
+
     gladLoadGLES2(glfwGetProcAddress);
     glfwSwapInterval(1);
     // NOTE: OpenGL error checks have been omitted for brevity

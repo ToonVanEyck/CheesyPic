@@ -419,7 +419,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
     }
 }
 
-int get_lates_design(char *dir_path,char *design_path)
+int get_latest_design(char *dir_path,char *design_path)
 {
     DIR *d;
     struct dirent *dir;
