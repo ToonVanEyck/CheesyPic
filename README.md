@@ -72,6 +72,8 @@ https://die-antwort.eu/techblog/2017-12-setup-raspberry-pi-for-kiosk-mode/
 
 
 
+
+
 commands | Discription
 ---------|---------------------------------
 'c'      | start capture
