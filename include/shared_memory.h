@@ -29,6 +29,7 @@ typedef enum{
     log_countdown_1,
     log_capture,
     log_decode,
+    log_capture_failed,
     log_reveal,
     log_procces,
     log_print

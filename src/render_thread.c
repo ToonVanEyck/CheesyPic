@@ -1,5 +1,15 @@
 #include "render_thread.h"
 
+#define GLAD_GLES2_IMPLEMENTATION
+#include <glad/gles2.h>
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
+int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *preview_mirror_mat ,GLuint *reveal_mirror_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
+void cleanup_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *preview_mirror_mat ,GLuint *reveal_mirror_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
+void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat ,GLuint preview_mirror_mat ,GLuint reveal_mirror_mat);
+
+
 static unsigned long readJpg(char *name, char **data){
     FILE *file;
 	unsigned long size;
@@ -43,16 +53,17 @@ static const struct
 };
 #define NUM_TEXTURES 2
 static const char* vertex_shader_text =
-"#version 140\n"
-"in vec3 vCol;\n"
-"in vec2 vPos;\n"
-"in vec2 texcoord;\n"
+"#version 100\n"
+"precision mediump float;\n"
+"attribute vec3 vCol;\n"
+"attribute vec2 vPos;\n"
+"attribute vec2 texcoord;\n"
 "uniform  mat4 resize;\n"
 "uniform  mat2 preview_mirror;\n"
 "uniform  mat2 reveal_mirror;\n"
-"out vec3 color;\n"
-"out vec2 tex_preview_coord;\n"
-"out vec2 tex_overlay_coord;\n"
+"varying vec3 color;\n"
+"varying vec2 tex_preview_coord;\n"
+"varying vec2 tex_overlay_coord;\n"
 "void main()\n"
 "{\n"
 "    gl_Position = resize * vec4(vPos, 0.0, 1.0);\n"
@@ -61,18 +72,20 @@ static const char* vertex_shader_text =
 "    color = vCol;\n"
 "}\n";
  
+// "out vec4 outColor;\n"
 static const char* fragment_shader_text =
-"#version 140\n"
-"in vec3 color;\n"
-"in vec2 tex_preview_coord;\n"
-"in vec2 tex_overlay_coord;\n"
-"out vec4 outColor;\n"
+"#version 100\n"
+"precision mediump float;\n"
+"varying vec3 color;\n"
+"varying vec2 tex_preview_coord;\n"
+"varying vec2 tex_overlay_coord;\n"
 "uniform sampler2D tex_preview;\n"
 "uniform sampler2D tex_overlay;\n"
 "void main()\n"
 "{\n"
-"   outColor = mix(texture(tex_preview, tex_preview_coord),texture(tex_overlay, tex_overlay_coord), texture(tex_overlay, tex_overlay_coord).a);\n"
+"   gl_FragColor = mix(texture2D(tex_preview, tex_preview_coord),texture2D(tex_overlay, tex_overlay_coord), texture2D(tex_overlay, tex_overlay_coord).a);\n"
 "}\n";
+
 
 static void error_callback(int error, const char* description)
 {
@@ -90,6 +103,18 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 
+static void window_focus_callback(GLFWwindow* window, int focused)
+{
+    if (focused)
+    {
+        // The window gained input focus
+    }
+    else
+    {
+        glfwFocusWindow(window);
+    }
+}
+
 void start_render_thread(shared_memory_t *shared_memory)
 {
     LOG("Started render thread!\n");
@@ -98,6 +123,15 @@ void start_render_thread(shared_memory_t *shared_memory)
     GLuint program, resize_mat, preview_mirror_mat, reveal_mirror_mat, fragment_shader, vertex_shader, ebo, vbo;
     GLFWwindow* window;
     init_render_thread(&window, textures, &program, &resize_mat, &preview_mirror_mat, &reveal_mirror_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
+
+    printf("OpenGL info:\n"
+	       "\tVendor   = \"%s\"\n"
+	       "\tRenderer = \"%s\"\n"
+	       "\tVersion  = \"%s\"\n",
+	       glGetString(GL_VENDOR),
+	       glGetString(GL_RENDERER),
+	       glGetString(GL_VERSION));
+
     renderRunning = 1;
     run_render_thread(shared_memory, &window,program, resize_mat, preview_mirror_mat, reveal_mirror_mat);
     cleanup_render_thread(&window, textures, &program, &resize_mat, &preview_mirror_mat, &reveal_mirror_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
@@ -121,8 +155,12 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
 
     if (!glfwInit()) exit(EXIT_FAILURE);
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    // glfwWindowHint(GLFW_FLOATING , GLFW_TRUE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+
 
     primaryMonitor = glfwGetPrimaryMonitor();
     *window = glfwCreateWindow(600, 400, "CheesyPic Photobooth by ToonVanEyck", WINDOW?NULL:primaryMonitor, NULL);
@@ -135,11 +173,12 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     glfwSetInputMode(*window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwSetKeyCallback(*window, key_callback);
+    glfwSetWindowFocusCallback(*window, window_focus_callback);
 
     glfwMakeContextCurrent(*window);
-    gladLoadGL();
-    glfwSwapInterval(1);
 
+    gladLoadGLES2(glfwGetProcAddress);
+    glfwSwapInterval(1);
     // NOTE: OpenGL error checks have been omitted for brevity
     GLuint elements[] = {
         0, 1, 2,
@@ -149,11 +188,9 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(elements), elements, GL_STATIC_DRAW);
 
-
     glGenBuffers(1, vbo);
     glBindBuffer(GL_ARRAY_BUFFER, *vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
     *vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(*vertex_shader, 1, &vertex_shader_text, NULL);
     glCompileShader(*vertex_shader);
@@ -161,25 +198,21 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     *fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(*fragment_shader, 1, &fragment_shader_text, NULL);
     glCompileShader(*fragment_shader);
-
     *program = glCreateProgram();
     glAttachShader(*program, *vertex_shader);
     glAttachShader(*program, *fragment_shader);
-    glBindFragDataLocation(*program, 0, "outColor");
+    // glBindFragDataLocation(*program, 0, "outColor");
     glLinkProgram(*program);
-
     *resize_mat = glGetUniformLocation(*program, "resize");
     *preview_mirror_mat = glGetUniformLocation(*program, "preview_mirror");
     *reveal_mirror_mat = glGetUniformLocation(*program, "reveal_mirror");
     vpos_location = glGetAttribLocation(*program, "vPos");
     vcol_location = glGetAttribLocation(*program, "vCol");
     GLint texAttrib = glGetAttribLocation(*program, "texcoord");
-
     glEnableVertexAttribArray(vpos_location);
     glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) 0);
     glEnableVertexAttribArray(vcol_location);
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) (sizeof(float) * 2));
-
     glEnableVertexAttribArray(texAttrib);
     glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) (sizeof(float) * 5));
     glUseProgram(*program);
@@ -189,26 +222,22 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     // unsigned char* image;
     // char* jpeg;
     // unsigned long size;
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textures[0]);
         // size = readJpg("test.jpg",&jpeg);
         // decodeJpg(jpeg,size,&image,&width,&height);
         // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
     glUniform1i(glGetUniformLocation(*program, "tex_overlay"), 0);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textures[1]);
         // size = readJpg("capture_preview.jpg",&jpeg);
         // decodeJpg(jpeg,size,&image,&width,&height);
         // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
     glUniform1i(glGetUniformLocation(*program, "tex_preview"), 1);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -314,16 +343,18 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                         break;
                     }
                 }
+                
                 glActiveTexture(GL_TEXTURE0);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->overlay_buffer.width, 
                     shared_memory->overlay_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
                     shared_memory->overlay_buffer.raw_data);
+             
                 glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
-
                 glUniformMatrix2fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
                 glUniformMatrix2fv(reveal_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
                 glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
                 glfwSwapBuffers(*window);
             }else{
                 // -------- CAPTURE LOGIC --------

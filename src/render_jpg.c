@@ -6,10 +6,10 @@
 
 #include <turbojpeg.h>
 
-#include <glad/glad.h>
-//#define GLFW_INCLUDE_NONE
+#define GLAD_GL_IMPLEMENTATION
+#include <glad/gl.h>
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-// #include "linmath.h"
  
 #include <stdlib.h>
 #include <stdio.h>
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 
     glfwMakeContextCurrent(window);
     //gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-    gladLoadGL();
+    gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
 
     // NOTE: OpenGL error checks have been omitted for brevity

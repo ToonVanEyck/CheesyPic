@@ -63,6 +63,7 @@ typedef struct{
     countdown_t countdown;
     overlay_t idle;
     overlay_t smile;
+    overlay_t capture_failed;
     overlay_t print;
     struct itimerval preview_time;
     unsigned char *preview_mirror;
