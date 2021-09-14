@@ -80,6 +80,30 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
+static void window_iconify_callback(GLFWwindow* window, int iconified)
+{
+    if (iconified)
+    {
+        printf("iconified\n");
+    }
+    else
+    {
+        printf("restored\n");
+    }
+}
+
+static void window_focus_callback(GLFWwindow* window, int focused)
+{
+    if (focused)
+    {
+        // The window gained input focus
+    }
+    else
+    {
+        glfwFocusWindow(window);
+    }
+}
+
 int main(void)
 {
     glfwSetErrorCallback(error_callback);
@@ -105,6 +129,8 @@ int main(void)
     }
 
     glfwSetKeyCallback(window, key_callback);
+    glfwSetWindowIconifyCallback(window, window_iconify_callback);
+    glfwSetWindowFocusCallback(window, window_focus_callback);
 
     glfwMakeContextCurrent(window);
     gladLoadGLES2(glfwGetProcAddress);
