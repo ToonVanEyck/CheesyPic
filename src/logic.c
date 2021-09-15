@@ -125,26 +125,26 @@ void free_logic(photobooth_config_t *config, printer_info_t *printer_info)
 int read_config(photobooth_config_t *config, char *design_path)
 {
     config->countdown.type = image_png;
-    config->countdown.data.image.cd_3.path = "../overlays/3.png";
-    config->countdown.data.image.cd_2.path = "../overlays/2.png";
-    config->countdown.data.image.cd_1.path = "../overlays/1.png";
-    config->idle.path = "../overlays/push.png";
-    config->smile.path = "../overlays/smile.png";
-    config->capture_failed.path = "../overlays/smile.png";
-    config->print.path = "../overlays/printing.png";
+    config->countdown.data.image.cd_3.path = "/usr/local/etc/cheesypic/theme/3.png";
+    config->countdown.data.image.cd_2.path = "/usr/local/etc/cheesypic/theme/2.png";
+    config->countdown.data.image.cd_1.path = "/usr/local/etc/cheesypic/theme/1.png";
+    config->idle.path = "/usr/local/etc/cheesypic/theme/push.png";
+    config->smile.path = "/usr/local/etc/cheesypic/theme/smile.png";
+    config->capture_failed.path = "/usr/local/etc/cheesypic/theme/smile.png";
+    config->print.path = "/usr/local/etc/cheesypic/theme/printing.png";
 
     config->countdown.data.image.delay.it_value.tv_sec = 1;
 
     //config->num_photos_in_design = 3;
     
     //load png resources
-    if(load_png_image(&config->countdown.data.image.cd_3)) return 1;
-    if(load_png_image(&config->countdown.data.image.cd_2)) return 1;
-    if(load_png_image(&config->countdown.data.image.cd_1)) return 1;
-    if(load_png_image(&config->idle)) return 1;
-    if(load_png_image(&config->smile)) return 1;
-    if(load_png_image(&config->capture_failed)) return 1;
-    if(load_png_image(&config->print)) return 1;
+    if(load_png_image(&config->countdown.data.image.cd_3))  { LOG("Failed to load recource: %s\n",config->countdown.data.image.cd_3 ); return 1;}
+    if(load_png_image(&config->countdown.data.image.cd_2))  { LOG("Failed to load recource: %s\n",config->countdown.data.image.cd_2 ); return 1;}
+    if(load_png_image(&config->countdown.data.image.cd_1))  { LOG("Failed to load recource: %s\n",config->countdown.data.image.cd_1 ); return 1;}
+    if(load_png_image(&config->idle))                       { LOG("Failed to load recource: %s\n",config->idle ); return 1;}
+    if(load_png_image(&config->smile))                      { LOG("Failed to load recource: %s\n",config->smile ); return 1;}
+    if(load_png_image(&config->capture_failed))             { LOG("Failed to load recource: %s\n",config->capture_failed ); return 1;}
+    if(load_png_image(&config->print))                      { LOG("Failed to load recource: %s\n",config->print ); return 1;}
 
     config->preview_time.it_value.tv_sec = 3;
     *config->preview_mirror = 1;

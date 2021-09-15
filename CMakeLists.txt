@@ -60,20 +60,23 @@ include_directories(.
 message(STATUS "glfw path: ${glfw_SOURCE_DIR}/deps" ...)
 
 # PHOTOBOOTH
-add_executable(photobooth src/main.c src/capture_thread.c src/decode_thread.c src/render_thread.c src/logic.c src/lodepng.c src/printer.c src/design.c )
-target_link_libraries(photobooth glfw)
-target_link_libraries(photobooth OpenGL::GL)
-target_link_libraries(photobooth ${Gphoto2_LIBRARIES})
-target_link_libraries(photobooth ${TurboJPEG_LIBRARIES})
-target_link_libraries(photobooth ${JSONC_LIBRARY} )
-target_link_libraries(photobooth ${LIBXML2_LIBRARIES})
-target_link_libraries(photobooth ${GTK_LIBRARIES})
-target_link_libraries(photobooth ${LibRSVG_LIBRARIES})
-target_link_libraries(photobooth ${B64_LIBRARIES})
+add_executable(cheesypic src/main.c src/capture_thread.c src/decode_thread.c src/render_thread.c src/logic.c src/lodepng.c src/printer.c src/design.c )
+target_link_libraries(cheesypic glfw)
+target_link_libraries(cheesypic OpenGL::GL)
+target_link_libraries(cheesypic ${Gphoto2_LIBRARIES})
+target_link_libraries(cheesypic ${TurboJPEG_LIBRARIES})
+target_link_libraries(cheesypic ${JSONC_LIBRARY} )
+target_link_libraries(cheesypic ${LIBXML2_LIBRARIES})
+target_link_libraries(cheesypic ${GTK_LIBRARIES})
+target_link_libraries(cheesypic ${LibRSVG_LIBRARIES})
+target_link_libraries(cheesypic ${B64_LIBRARIES})
 
-install(TARGETS             photobooth
-        RENAME              cheesypic
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS     cheesypic
+        DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(DIRECTORY   theme
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
+        DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${CMAKE_PROJECT_NAME}")
 
 # RENDER EXAMPLE
 add_executable(render_jpeg src/render_jpg.c)
