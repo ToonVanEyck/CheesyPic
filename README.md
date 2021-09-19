@@ -57,10 +57,11 @@ apt remove gutenprint*
 # Install necessary development libraries
 apt install libusb-1.0-0-dev libcups2-dev
 # Download latest gutenprint snapshot from sourceforge
-wget https://git.shaftnet.org/cgit/selphy_print.git/snapshot/selphy_print-gutenprint_5.3.4.tar.gz
-tar -xf gutenprint-5.3.4.tar.xz
+curl -o gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz "https://master.dl.sourceforge.net/project/gimp-print/snapshots/gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz?viasf=1"
+# Decompress & Extract
+tar -xJf gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz
 # Compile gutenprint
-cd gutenprint-5.3.4
+cd gutenprint-5.3.4-2021-08-18T01-00-2a241dff
 ./configure --without-doc
 make -j4
 make install
@@ -149,3 +150,5 @@ commands | Discription
 'f'      | toggle fast mode
 'w'      | toggle windowed / fulscreen mode
 's'      | exit but wait 15s before stopping
+
+lpstat -s | awk '{/`lpinfo -v | awk '/gutenprint53\+usb*/{print $2}`*/ print $3}'
