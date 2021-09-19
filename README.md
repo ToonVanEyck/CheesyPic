@@ -38,6 +38,68 @@ install with ```sudo apt install```
 - libcups2-dev
 
 ## Installation
+### Cheesypic
+```bash
+cd cheesypic
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+```
+
+### Guttenprint / Selphy-print
+```bash
+# Gain root
+sudo su -
+# Remove existing gutenprint packages
+apt remove gutenprint*
+# Install necessary development libraries
+apt install libusb-1.0-0-dev libcups2-dev
+# Download latest gutenprint snapshot from sourceforge
+curl -o gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz "https://master.dl.sourceforge.net/project/gimp-print/snapshots/gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz?viasf=1"
+# Decompress & Extract
+tar -xJf gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz
+# Compile gutenprint
+cd gutenprint-5.3.4-2021-08-18T01-00-2a241dff
+./configure --without-doc
+make -j4
+make install
+cd ..
+# Get the latest selphy_print code
+git clone git://git.shaftnet.org/selphy_print.git
+# Compile selphy_print
+cd selphy_print
+make -j4 
+make install
+# Set up library include path
+echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf
+ldconfig
+# Refresh PPDs
+cups-genppdupdate
+# Restart CUPS
+service cups restart 
+# FiN
+exit
+```
+Note: Some printers may require additional image processing library.
+
+## GPIO trigger
+The photobooth uses the 'c' key as a trigger to start the photobooth. A device-tree overlay can be added to configure gpio_1 as a keypad 'c' button.
+
+Compile and install the *photobooth_button.dts* on the pi using:
+
+```bash
+sudo dtc -I dts -O dtb -o /boot/overlays/photobooth_button.dtbo photobooth_button.dts
+```
+Connect a normaly open button between GPIO_1 and ground.
+
+## disable gvfs-gphoto:
+gvfs-gphoto automatically mounts cameras as a storage device on boot, this prevents cheesypic from using them. To disable gvfs:
+```bash
+sudo systemctl mask gvfs-daemon
+systemctl --user mask gvfs-daemon
+```
 
 ## Auto start
 
