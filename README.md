@@ -57,11 +57,10 @@ apt remove gutenprint*
 # Install necessary development libraries
 apt install libusb-1.0-0-dev libcups2-dev
 # Download latest gutenprint snapshot from sourceforge
-curl -o gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz "https://master.dl.sourceforge.net/project/gimp-print/snapshots/gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz?viasf=1"
-# Decompress & Extract
-tar -xJf gutenprint-5.3.4-2021-08-18T01-00-2a241dff.tar.xz
+wget https://git.shaftnet.org/cgit/selphy_print.git/snapshot/selphy_print-gutenprint_5.3.4.tar.gz
+tar -xf gutenprint-5.3.4.tar.xz
 # Compile gutenprint
-cd gutenprint-5.3.4-2021-08-18T01-00-2a241dff
+cd gutenprint-5.3.4
 ./configure --without-doc
 make -j4
 make install
@@ -88,7 +87,6 @@ Note: Some printers may require additional image processing library.
 The photobooth uses the 'c' key as a trigger to start the photobooth. A device-tree overlay can be added to configure gpio_1 as a keypad 'c' button.
 
 Compile and install the *photobooth_button.dts* on the pi using:
-
 ```bash
 sudo dtc -I dts -O dtb -o /boot/overlays/photobooth_button.dtbo photobooth_button.dts
 ```
@@ -100,85 +98,46 @@ gvfs-gphoto automatically mounts cameras as a storage device on boot, this preve
 sudo systemctl mask gvfs-daemon
 systemctl --user mask gvfs-daemon
 ```
-
-## Auto start
-
-----------------------------
-
-
+Finally add the following line to ```/boot/config.txt```:
 ```bash
-sudo apt install cmake
-sudo apt install libgphoto2-dev
-sudo apt install libturbojpeg0-dev 
-sudo apt install libxml2-dev 
-sudo apt install libjson-c-dev 
-sudo apt install libglib2.0-dev
-sudo apt install libcairo2-dev 
-sudo apt install libgdk-pixbuf2.0-dev 
-sudo apt install librsvg2-dev 
-sudo apt install libb64-dev 
-sudo apt install libgtk-3-dev
-sudo apt install libusb-1.0-0-dev
-sudo apt install xorg-dev #maybe
-
-sudo apt install mesa-utils
-
-#install cups
-sudo apt install cups
-sudo apt install libcups2-dev
-#mabe needed
-wget https://git.shaftnet.org/cgit/selphy_print.git/snapshot/selphy_print-gutenprint_5.3.4.tar.gz
-tar -xf gutenprint-5.3.4.tar.xz
-cd gutenprint-5.3.4
-./configure
-make
-sudo make install
-cd..
-#deff needed
-git clone https://git.shaftnet.org/cgit/selphy_print.git/
-cd selphy_print
-make
-sudo make install
-cd lib70x
-make
-sudo make install
-sudo bash
-echo '/usr/local/lib' >> /etc/ld.so.conf.d/local.conf
-ldconfig
-exit
-cd ..
-# misc
-git clone https://github.com/kbranigan/Simple-OpenGL-Image-Library
-git clone https://github.com/glfw/glfw
-```
-
-Note:
-add the user to the lp group
-`sudo adduser $USER lp
-
-Setup of button DTO 
-
-```bash
-sudo dtc -I dts -O dtb -o /boot/overlays/photobooth_button.dtbo photobooth_button.dts
-```
-inally the following line must be added to /boot/config.txt:
 dtoverlay=photobooth_button
+```
 
-https://kernelmastery.com/enable-regular-users-to-add-printers-to-cups/
+## Printer Setup
+add the user to the lp group
+```bash
+sudo adduser $USER lp
+```
+Set the default printer:
+```bash
+lpoptions -d printer-name
+```
+Verify the default printer:
+```bash
+lpstat -d
+```
+## Auto start
+The configuration described in this topic allow you to automatically start the cheesypic software on boot without a desktop environement.
+### Openbox Configuration
+edit ```/etc/xdg/openbox/autostart```:
+```bash
+# Disable any form of screen saver / screen blanking / power management
+xset s off
+xset s noblank
+xset -dpms
+# Allow quitting the X server with CTRL-ATL-Backspace
+setxkbmap -option terminate:ctrl_alt_bksp
+# Start Photobooth
+cheesypic /home/$USER/cheesypic_data
+```
+### Start X on boot
+eddit ```.bash_profile```:
+```bash
+[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && startx -- -nocursor
+```
 
-disable gvfs-gphoto:
-sudo systemctl mask gvfs-daemon
-systemctl --user mask gvfs-daemon
 
-Automatic boot:
----------------
-https://die-antwort.eu/techblog/2017-12-setup-raspberry-pi-for-kiosk-mode/
-
-
-
-
-
-
+## Usage / Dev commands
 
 commands | Discription
 ---------|---------------------------------
