@@ -1,4 +1,48 @@
-required packages 
+# Cheeyspic PhotoBooth
+The cheesypic software transforms your rasberry-pi in a full fledged photobooth. The software will work with DSLR cameras and dye-sub photo printers to deliver a high quality photobooth experience.
+
+## Features
+- Live view
+- Custom photo strip designs
+- Local storage of captured photos
+- Custom themes
+- Samba file server
+  
+## Supported Devices
+### Cameras
+The cameras is interfaced using libgphoto2. In theory the software will support any camera that libgphoto2 support.
+
+[Supported Cameras](http://gphoto.org/proj/libgphoto2/support.php)
+### Printers
+The printer is interfaced using guttenprint and Solomon Peachy's selphy_print sofware.
+
+[Supported dye-sub printers](https://www.peachyphotos.com/blog/stories/dye-sublimation-photo-printers-and-linux/)
+
+## Required packages
+install with ```sudo apt install```
+- cmake
+- cups
+- libgphoto2-dev
+- libturbojpeg0-dev 
+- libxml2-dev 
+- libjson-c-dev 
+- libglib2.0-dev
+- libcairo2-dev 
+- libgdk-pixbuf2.0-dev 
+- librsvg2-dev 
+- libb64-dev 
+- libgtk-3-dev
+- libusb-1.0-0-dev
+- xorg-dev
+- mesa-utils
+- libcups2-dev
+
+## Installation
+
+## Auto start
+
+----------------------------
+
 
 ```bash
 sudo apt install cmake
