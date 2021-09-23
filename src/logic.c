@@ -102,6 +102,8 @@ int read_config(photobooth_config_t *config, char *design_path, char *theme_path
     if(load_theme_from_file(&config->theme, theme_path)) return 1;
     if(load_design_from_file(&config->design, design_path)) return 1;
 
+    LOG("cairo version: %s\n",cairo_version_string ());
+
     //output parameters
     char *split1 = strrchr(design_path,'/');
     //*split1 = 0;
