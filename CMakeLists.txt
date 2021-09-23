@@ -70,7 +70,7 @@ include_directories(.
 message(STATUS "glfw path: ${glfw_SOURCE_DIR}/deps" ...)
 
 # PHOTOBOOTH
-add_executable(cheesypic src/main.c src/capture_thread.c src/decode_thread.c src/render_thread.c src/logic.c src/lodepng.c src/printer.c src/design.c )
+add_executable(cheesypic src/main.c src/capture_thread.c src/decode_thread.c src/render_thread.c src/logic.c src/lodepng.c src/printer.c src/design.c src/theme.c )
 target_link_libraries(cheesypic glfw)
 target_link_libraries(cheesypic OpenGL::GL)
 target_link_libraries(cheesypic ${Gphoto2_LIBRARIES})
@@ -101,6 +101,13 @@ target_link_libraries(svg_render ${GTK_LIBRARIES})
 target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
 target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
 target_link_libraries(svg_render ${B64_LIBRARIES})
+
+# SVG THEME RENDER EXAMPLE
+add_executable(render_theme src/render_theme.c src/design.c src/lodepng.c)
+target_link_libraries(render_theme ${GTK_LIBRARIES})
+target_link_libraries(render_theme ${LIBXML2_LIBRARIES})
+target_link_libraries(render_theme ${LibRSVG_LIBRARIES})
+target_link_libraries(render_theme ${B64_LIBRARIES})
 
 # GLES EXAMPLE
 add_executable(triangles src/triangles.c)

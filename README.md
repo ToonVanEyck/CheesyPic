@@ -109,6 +109,8 @@ add the user to the lp group
 ```bash
 sudo adduser $USER lp
 ```
+Add your printer to cups using the cups webpage or lpadmin command.
+
 Set the default printer:
 ```bash
 lpoptions -d printer-name
@@ -150,5 +152,4 @@ commands | Discription
 'f'      | toggle fast mode
 'w'      | toggle windowed / fulscreen mode
 's'      | exit but wait 15s before stopping
-
-lpstat -s | awk '{/`lpinfo -v | awk '/gutenprint53\+usb*/{print $2}`*/ print $3}'
+op

@@ -41,7 +41,7 @@ char* get_state_name(logic_state_t i)
     return "UNDEFINED";
 }
 
-int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info, char *design_path)
+int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info, char *design_path, char *theme_path)
 {
     signal(SIGALRM, alarm_capture);
 
@@ -54,7 +54,7 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
     memset(session,0,sizeof(photobooth_session_t));
     config->preview_mirror = &shared_memory->preview_mirror;
     config->reveal_mirror = &shared_memory->reveal_mirror;
-    if(read_config(config,design_path)){
+    if(read_config(config,design_path,theme_path)){
         LOG("Error failed to configure the photobooth with the given design\n");
         return 1;
     }
@@ -78,78 +78,28 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
     return 0;
 }
 
-int load_png_image(overlay_t *overlay)
-{
-    unsigned error = 0;
-
-    unsigned char* png = 0;
-    size_t pngsize;
-
-    error = lodepng_load_file(&png, &pngsize, overlay->path);
-    if(!error) error = lodepng_decode32(&overlay->data,
-                                        &overlay->width, 
-                                        &overlay->height, 
-                                        png, pngsize);
-    if(error) LOG("error %u: %s\n", error, lodepng_error_text(error));
-    free(png);
-    return error;
-}
-
 void free_logic(photobooth_config_t *config, printer_info_t *printer_info)
 {
     //config
-    free(config->countdown.data.image.cd_3.data);
-    config->countdown.data.image.cd_3.data = NULL;
-    free(config->countdown.data.image.cd_2.data);
-    config->countdown.data.image.cd_2.data = NULL;
-    free(config->countdown.data.image.cd_2.data);
-    config->countdown.data.image.cd_2.data = NULL;
-    free(config->idle.data);
-    config->idle.data = NULL;
-    free(config->smile.data);
-    config->smile.data = NULL;
-    free(config->capture_failed.data);
-    config->capture_failed.data = NULL;
-    free(config->print.data);
-    config->print.data = NULL;
     if(config->printer_driver_name){
         free(config->printer_driver_name);
         config->printer_driver_name = NULL;
     }
+    free_theme(&config->theme);
     free_design(&config->design);
     //printer_info
     free(printer_info->deck);
     printer_info->deck = NULL;
 }
 
-int read_config(photobooth_config_t *config, char *design_path)
+int read_config(photobooth_config_t *config, char *design_path, char *theme_path)
 {
-    config->countdown.type = image_png;
-    config->countdown.data.image.cd_3.path = "/usr/local/etc/cheesypic/theme/3.png";
-    config->countdown.data.image.cd_2.path = "/usr/local/etc/cheesypic/theme/2.png";
-    config->countdown.data.image.cd_1.path = "/usr/local/etc/cheesypic/theme/1.png";
-    config->idle.path = "/usr/local/etc/cheesypic/theme/push.png";
-    config->smile.path = "/usr/local/etc/cheesypic/theme/smile.png";
-    config->capture_failed.path = "/usr/local/etc/cheesypic/theme/smile.png";
-    config->print.path = "/usr/local/etc/cheesypic/theme/printing.png";
-
-    config->countdown.data.image.delay.it_value.tv_sec = 1;
-
-    //config->num_photos_in_design = 3;
-    
-    //load png resources
-    if(load_png_image(&config->countdown.data.image.cd_3))  { LOG("Failed to load recource: %s\n",config->countdown.data.image.cd_3 ); return 1;}
-    if(load_png_image(&config->countdown.data.image.cd_2))  { LOG("Failed to load recource: %s\n",config->countdown.data.image.cd_2 ); return 1;}
-    if(load_png_image(&config->countdown.data.image.cd_1))  { LOG("Failed to load recource: %s\n",config->countdown.data.image.cd_1 ); return 1;}
-    if(load_png_image(&config->idle))                       { LOG("Failed to load recource: %s\n",config->idle ); return 1;}
-    if(load_png_image(&config->smile))                      { LOG("Failed to load recource: %s\n",config->smile ); return 1;}
-    if(load_png_image(&config->capture_failed))             { LOG("Failed to load recource: %s\n",config->capture_failed ); return 1;}
-    if(load_png_image(&config->print))                      { LOG("Failed to load recource: %s\n",config->print ); return 1;}
-
+    config->countdown_delay.it_value.tv_sec = 1;
     config->preview_time.it_value.tv_sec = 3;
     *config->preview_mirror = 1;
     *config->reveal_mirror = 1;
 
+    if(load_theme_from_file(&config->theme, theme_path)) return 1;
     if(load_design_from_file(&config->design, design_path)) return 1;
 
     //output parameters
@@ -222,16 +172,16 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
         LOG("Entered %s state!\n",get_state_name(prev_logic_state));
         // select overlays here!
         switch (shared_memory->logic_state){
-            case log_idle:          set_image_overlay(&shared_memory->overlay_buffer,&config->idle);                        break;
-            case log_triggred:                                                                                              break;
-            case log_countdown_3:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_3);   break;
-            case log_countdown_2:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_2);   break;
-            case log_countdown_1:   set_image_overlay(&shared_memory->overlay_buffer,&config->countdown.data.image.cd_1);   break;
-            case log_capture:       set_image_overlay(&shared_memory->overlay_buffer,&config->smile);                       break;
-            case log_capture_failed:set_image_overlay(&shared_memory->overlay_buffer,&config->capture_failed);              break;
-            case log_reveal:                                                                                                break; //the captured image is shown instead of the overlay
-            case log_procces:       set_image_overlay(&shared_memory->overlay_buffer,&config->print);                       break;
-            default:                                                                                                        break;
+            case log_idle:          set_image_overlay(&shared_memory->overlay_buffer,&config->theme.push);   break;
+            case log_triggred:                                                                               break;
+            case log_countdown_3:   set_image_overlay(&shared_memory->overlay_buffer,&config->theme.cd_3);   break;
+            case log_countdown_2:   set_image_overlay(&shared_memory->overlay_buffer,&config->theme.cd_2);   break;
+            case log_countdown_1:   set_image_overlay(&shared_memory->overlay_buffer,&config->theme.cd_1);   break;
+            case log_capture:       set_image_overlay(&shared_memory->overlay_buffer,&config->theme.smile);  break;
+            case log_capture_failed:set_image_overlay(&shared_memory->overlay_buffer,&config->theme.fail);   break;
+            case log_reveal:                                                                                 break; //the captured image is shown instead of the overlay
+            case log_procces:       set_image_overlay(&shared_memory->overlay_buffer,&config->theme.print);  break;
+            default:                                                                                         break;
         }
         sem_post(&shared_memory->sem_render);
     }
@@ -256,7 +206,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_3:
                 if(init_state){
-                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown.data.image.delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_delay,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_countdown_2;
@@ -266,7 +216,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_2:
                 if(init_state){
-                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown.data.image.delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_delay,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_countdown_1;
@@ -275,7 +225,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_1:
                 if(init_state){
-                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown.data.image.delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_delay,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_capture;
@@ -292,7 +242,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_capture_failed:
                 if(init_state){
-                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown.data.image.delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_delay,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_countdown_3;
@@ -436,7 +386,7 @@ int get_latest_design(char *dir_path,char *design_path)
             strncat(path,"/",2);
             strncat(path,dir->d_name,255);
             stat(path,&file_stats);
-            if( strstr(path,".svg") && file_stats.st_mtim.tv_sec > most_recent){
+            if( strstr(path,".design.svg") && file_stats.st_mtim.tv_sec > most_recent){
                 most_recent = file_stats.st_mtim.tv_sec;
                 strcpy(design_path,path);
             }          
@@ -444,6 +394,40 @@ int get_latest_design(char *dir_path,char *design_path)
         closedir(d);
         if(design_path[0]==0){
             LOG("ERROR: \"%s\" does not contain a design.\n",dir_path);
+            return 1;
+        }
+    }else{
+        LOG("ERROR: \"%s\" is not a valid directory.\n",dir_path);
+        return 1;
+    }
+    return 0;
+}
+
+int get_latest_theme(char *dir_path,char *theme_path)
+{
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(dir_path);
+    if(d)
+    {
+        time_t most_recent = 0;
+        while ((dir = readdir(d)) != NULL)
+        {
+            if(dir->d_type != DT_REG)continue;
+            char path[512]={0};
+            struct stat file_stats = {0};
+            strncpy(path,dir_path,255);
+            strncat(path,"/",2);
+            strncat(path,dir->d_name,255);
+            stat(path,&file_stats);
+            if( strstr(path,".theme.svg") && file_stats.st_mtim.tv_sec > most_recent){
+                most_recent = file_stats.st_mtim.tv_sec;
+                strcpy(theme_path,path);
+            }          
+        }
+        closedir(d);
+        if(theme_path[0]==0){
+            LOG("ERROR: \"%s\" does not contain a theme.\n",dir_path);
             return 1;
         }
     }else{

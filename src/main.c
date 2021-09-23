@@ -18,6 +18,8 @@ int main(int argc, char *argv[])
     }
     char design_path[512]={0};
     if(get_latest_design(argv[1],design_path)) exit(EXIT_FAILURE);
+    char theme_path[512]={0};
+    if(get_latest_theme(argv[1],theme_path))   exit(EXIT_FAILURE);
     // setup ipc
     LOG("allocating %ld bytes of shared memory.\n",sizeof(shared_memory_t));
     shared_memory_t *shared_memory = mmap(NULL, sizeof(shared_memory_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -35,7 +37,7 @@ int main(int argc, char *argv[])
     printer_info_t printer_info;
     photobooth_config_t config;
     photobooth_session_t session;
-    if(init_logic(shared_memory, &config, &session, &printer_info, design_path)){
+    if(init_logic(shared_memory, &config, &session, &printer_info, design_path, theme_path)){
         exit_code = EXIT_FAILURE; 
         goto cleanup;
     }
