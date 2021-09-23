@@ -26,11 +26,14 @@ endif()
 
 include(FetchContent)
 FetchContent_Declare(
-  glfw
-  GIT_REPOSITORY    https://github.com/glfw/glfw.git
-  GIT_TAG           63da04e5ced93fcb87a20513acdff5d78b1166ff
+    glfw
+    GIT_REPOSITORY    "https://github.com/glfw/glfw.git"
+    GIT_TAG           63da04e5ced93fcb87a20513acdff5d78b1166ff
 )
 FetchContent_MakeAvailable(glfw)
+
+file(DOWNLOAD "https://github.com/google/fonts/blob/5c3d8ef085f3084db38936d0dcd39a567dbc1e01/ofl/amaticsc/AmaticSC-Regular.ttf=true"  "AmaticSC-Regular.ttf")
+file(DOWNLOAD "https://github.com/google/fonts/blob/5c3d8ef085f3084db38936d0dcd39a567dbc1e01/ofl/amaticsc/AmaticSC-Bold.ttf?raw=true" "AmaticSC-Bold.ttf")
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -87,6 +90,10 @@ install(TARGETS     cheesypic
 install(DIRECTORY   theme
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
         DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${CMAKE_PROJECT_NAME}")
+
+install(FILES AmaticSC-Bold.ttf AmaticSC-Regular.ttf
+        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ 
+        DESTINATION "/usr/local/share/fonts/")
 
 # # SVG DESIGN RENDER EXAMPLE
 # add_executable(svg_render src/svg_to_png.c src/design.c src/lodepng.c)
