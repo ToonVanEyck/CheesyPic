@@ -220,9 +220,6 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
             if(fds[FDS_TIMER].revents & POLLIN){
                 uint64_t value;
                 read(fds[FDS_TIMER].fd, &value,8);  
-                #if DEBUG
-                    clock_t runtime_begin = clock();
-                #endif
                 if(shared_memory->logic_state != log_capture || !shared_memory->photobooth_active){
                     //  -------- PREVIEW LOGIC --------
                     for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
@@ -301,10 +298,6 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                     #endif
                     shared_memory->capture_buffer.jpeg_copied = 0;
                 }
-                #if DEBUG
-                    clock_t runtime_end = clock();
-                    shared_memory->debug_info.capture_thread_runtime = (double)(runtime_end - runtime_begin) / CLOCKS_PER_SEC;
-                #endif
                 sem_post(&shared_memory->sem_decode);
             }
         }else{ // error 

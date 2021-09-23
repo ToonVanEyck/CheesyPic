@@ -5,7 +5,6 @@
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
-//#include <glib/gLOG.h>
 #include <b64/cencode.h>
 
 #include "shared_memory.h"
@@ -50,53 +49,6 @@ void xml_theme_layer_set_visability(xmlNode * layer_node, int make_visable)
     if (layer_node->type == XML_ELEMENT_NODE) {
         xmlSetProp(layer_node,"style",make_visable?"display:inline":"display:none");
     }
-}
-
-int load_theme_from_file(theme_t *theme, const char *svg_theme)
-{
-    memset(theme,0,sizeof(theme_t));
-    doc = xmlReadFile(svg_theme, NULL, 0);
-    if(doc == NULL){
-        return 1;
-    }
-    root = xmlDocGetRootElement(doc);
-    if(root == NULL){
-        return 1;
-    }
-
-    cd_3_node = xml_get_child_theme_layer_by_name(root,"3");
-    cd_2_node = xml_get_child_theme_layer_by_name(root,"2");
-    cd_1_node = xml_get_child_theme_layer_by_name(root,"1");
-    push_node = xml_get_child_theme_layer_by_name(root,"push");
-    smile_node = xml_get_child_theme_layer_by_name(root,"smile");
-    fail_node = xml_get_child_theme_layer_by_name(root,"fail");
-    print_node = xml_get_child_theme_layer_by_name(root,"print");
-    bg_transparent_node = xml_get_child_theme_layer_by_name(root,"bg_transparent");
-    bg_opaque_node = xml_get_child_theme_layer_by_name(root,"bg_opaque");
-    fg_overlay_node = xml_get_child_theme_layer_by_name(root,"fg_overlay");
-
-    if(!cd_3_node){           LOG("No cd_3 layer found in %s\n",svg_theme); return 1;}
-    if(!cd_2_node){           LOG("No cd_2 layer found in %s\n",svg_theme); return 1;}
-    if(!cd_1_node){           LOG("No cd_1 layer found in %s\n",svg_theme); return 1;}
-    if(!push_node){           LOG("No push layer found in %s\n",svg_theme); return 1;}
-    if(!smile_node){          LOG("No smile layer found in %s\n",svg_theme); return 1;}
-    if(!fail_node){           LOG("No fail layer found in %s\n",svg_theme); return 1;}
-    if(!print_node){          LOG("No print layer found in %s\n",svg_theme); return 1;}
-    if(!bg_transparent_node){ LOG("No bg_transparent layer found in %s\n",svg_theme); return 1;}
-    if(!bg_opaque_node){      LOG("No bg_opaque layer found in %s\n",svg_theme); return 1;}
-    if(!fg_overlay_node){     LOG("No fg_overlay layer found in %s\n",svg_theme); return 1;}
-    
-    if(render_theme_layer(theme,cd_3_node, &theme->cd_3 )){  LOG("Couldn't render theme->cd_3 \n"); return 1;}
-    if(render_theme_layer(theme,cd_2_node, &theme->cd_2 )){  LOG("Couldn't render theme->cd_2 \n"); return 1;}
-    if(render_theme_layer(theme,cd_1_node, &theme->cd_1 )){  LOG("Couldn't render theme->cd_1 \n"); return 1;}
-    if(render_theme_layer(theme,push_node, &theme->push )){  LOG("Couldn't render theme->push \n"); return 1;}
-    if(render_theme_layer(theme,smile_node,&theme->smile )){ LOG("Couldn't render theme->smile\n"); return 1;}
-    if(render_theme_layer(theme,fail_node, &theme->fail )){  LOG("Couldn't render theme->fail \n"); return 1;}
-    if(render_theme_layer(theme,print_node,&theme->print )){ LOG("Couldn't render theme->print\n"); return 1;}
-
-    xmlCleanupParser();
-    xmlFreeDoc(doc);
-    return 0;
 }
 
 int render_theme_layer(theme_t *theme, xmlNode *layer, overlay_t *overlay)
@@ -168,7 +120,6 @@ int render_theme_layer(theme_t *theme, xmlNode *layer, overlay_t *overlay)
         return 1;
     }
 
-    // cairo_surface_write_to_png (theme_surface, "test.png");
     overlay->height = cairo_image_surface_get_height(theme_surface);
     overlay->width = cairo_image_surface_get_width(theme_surface);
     size_t img_size = (4 * overlay->width * overlay->height);
@@ -187,8 +138,54 @@ int render_theme_layer(theme_t *theme, xmlNode *layer, overlay_t *overlay)
 
     cairo_destroy (theme_ctx);
     cairo_surface_destroy (theme_surface);
-    //g_object_unref(handle);
     xmlBufferFree(buffer);
+    return 0;
+}
+
+int load_theme_from_file(theme_t *theme, const char *svg_theme)
+{
+    memset(theme,0,sizeof(theme_t));
+    doc = xmlReadFile(svg_theme, NULL, 0);
+    if(doc == NULL){
+        return 1;
+    }
+    root = xmlDocGetRootElement(doc);
+    if(root == NULL){
+        return 1;
+    }
+
+    cd_3_node = xml_get_child_theme_layer_by_name(root,"3");
+    cd_2_node = xml_get_child_theme_layer_by_name(root,"2");
+    cd_1_node = xml_get_child_theme_layer_by_name(root,"1");
+    push_node = xml_get_child_theme_layer_by_name(root,"push");
+    smile_node = xml_get_child_theme_layer_by_name(root,"smile");
+    fail_node = xml_get_child_theme_layer_by_name(root,"fail");
+    print_node = xml_get_child_theme_layer_by_name(root,"print");
+    bg_transparent_node = xml_get_child_theme_layer_by_name(root,"bg_transparent");
+    bg_opaque_node = xml_get_child_theme_layer_by_name(root,"bg_opaque");
+    fg_overlay_node = xml_get_child_theme_layer_by_name(root,"fg_overlay");
+
+    if(!cd_3_node){           LOG("No cd_3 layer found in %s\n",svg_theme); return 1;}
+    if(!cd_2_node){           LOG("No cd_2 layer found in %s\n",svg_theme); return 1;}
+    if(!cd_1_node){           LOG("No cd_1 layer found in %s\n",svg_theme); return 1;}
+    if(!push_node){           LOG("No push layer found in %s\n",svg_theme); return 1;}
+    if(!smile_node){          LOG("No smile layer found in %s\n",svg_theme); return 1;}
+    if(!fail_node){           LOG("No fail layer found in %s\n",svg_theme); return 1;}
+    if(!print_node){          LOG("No print layer found in %s\n",svg_theme); return 1;}
+    if(!bg_transparent_node){ LOG("No bg_transparent layer found in %s\n",svg_theme); return 1;}
+    if(!bg_opaque_node){      LOG("No bg_opaque layer found in %s\n",svg_theme); return 1;}
+    if(!fg_overlay_node){     LOG("No fg_overlay layer found in %s\n",svg_theme); return 1;}
+    
+    if(render_theme_layer(theme,cd_3_node, &theme->cd_3 )){  LOG("Couldn't render theme->cd_3 \n"); return 1;}
+    if(render_theme_layer(theme,cd_2_node, &theme->cd_2 )){  LOG("Couldn't render theme->cd_2 \n"); return 1;}
+    if(render_theme_layer(theme,cd_1_node, &theme->cd_1 )){  LOG("Couldn't render theme->cd_1 \n"); return 1;}
+    if(render_theme_layer(theme,push_node, &theme->push )){  LOG("Couldn't render theme->push \n"); return 1;}
+    if(render_theme_layer(theme,smile_node,&theme->smile )){ LOG("Couldn't render theme->smile\n"); return 1;}
+    if(render_theme_layer(theme,fail_node, &theme->fail )){  LOG("Couldn't render theme->fail \n"); return 1;}
+    if(render_theme_layer(theme,print_node,&theme->print )){ LOG("Couldn't render theme->print\n"); return 1;}
+
+    xmlCleanupParser();
+    xmlFreeDoc(doc);
     return 0;
 }
 

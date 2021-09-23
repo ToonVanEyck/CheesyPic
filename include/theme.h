@@ -32,7 +32,6 @@ typedef struct{
 }theme_t;
 
 int load_theme_from_file(theme_t *theme, const char *svg_theme);
-int render_theme_layer(theme_t *theme, xmlNode *layer, overlay_t *overlay);
 void free_theme(theme_t *theme);
 
 #endif

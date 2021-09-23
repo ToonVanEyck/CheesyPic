@@ -65,12 +65,6 @@ typedef struct{
 }capture_buffer_t;
 
 typedef struct{
-    double capture_thread_runtime;
-    double decode_thread_runtime;
-    double render_thread_runtime;
-}debug_info_t;
-
-typedef struct{
     unsigned char photobooth_active;
     unsigned char fastmode;
     unsigned char preview_mirror;
@@ -85,9 +79,6 @@ typedef struct{
     overlay_buffer_t overlay_buffer;
     capture_buffer_t capture_buffer;
     logic_state_t logic_state;
-    #if DEBUG
-        debug_info_t debug_info;
-    #endif
 }shared_memory_t;
 
 

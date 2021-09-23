@@ -88,33 +88,18 @@ install(DIRECTORY   theme
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
         DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${CMAKE_PROJECT_NAME}")
 
-# RENDER EXAMPLE
-add_executable(render_jpeg src/render_jpg.c)
-target_link_libraries(render_jpeg  ${Gphoto2_LIBRARIES})
-target_link_libraries(render_jpeg  ${TurboJPEG_LIBRARIES})
-target_link_libraries(render_jpeg glfw)
-target_link_libraries(render_jpeg OpenGL::GL)
+# # SVG DESIGN RENDER EXAMPLE
+# add_executable(svg_render src/svg_to_png.c src/design.c src/lodepng.c)
+# target_link_libraries(svg_render ${GTK_LIBRARIES})
+# target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
+# target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
+# target_link_libraries(svg_render ${B64_LIBRARIES})
 
-# SVG RENDER EXAMPLE
-add_executable(svg_render src/svg_to_png.c src/design.c src/lodepng.c)
-target_link_libraries(svg_render ${GTK_LIBRARIES})
-target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
-target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
-target_link_libraries(svg_render ${B64_LIBRARIES})
+# # SVG THEME RENDER EXAMPLE
+# add_executable(render_theme src/render_theme.c src/design.c src/lodepng.c)
+# target_link_libraries(render_theme ${GTK_LIBRARIES})
+# target_link_libraries(render_theme ${LIBXML2_LIBRARIES})
+# target_link_libraries(render_theme ${LibRSVG_LIBRARIES})
+# target_link_libraries(render_theme ${B64_LIBRARIES})
 
-# SVG THEME RENDER EXAMPLE
-add_executable(render_theme src/render_theme.c src/design.c src/lodepng.c)
-target_link_libraries(render_theme ${GTK_LIBRARIES})
-target_link_libraries(render_theme ${LIBXML2_LIBRARIES})
-target_link_libraries(render_theme ${LibRSVG_LIBRARIES})
-target_link_libraries(render_theme ${B64_LIBRARIES})
-
-# GLES EXAMPLE
-add_executable(triangles src/triangles.c)
-target_link_libraries(triangles glfw)
-target_link_libraries(triangles OpenGL::GL)
-
-# GTK EXAMPLE
-add_executable(gtk src/gtk_test.c)
-target_link_libraries(gtk ${GTK_LIBRARIES})
 

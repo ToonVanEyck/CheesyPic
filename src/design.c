@@ -51,7 +51,7 @@ int cnt_locations(xmlNode * a_node)
 void cnt_photos(xmlNode * a_node, unsigned *total_photos)
 {
     for (xmlNode *cur_node = a_node; cur_node; cur_node = cur_node->next) {
-        if(xml_node_is_cheesypic_placeholder(cur_node)){//xml_node_contains_child_with_name(cur_node, "rect") && xml_node_contains_child_with_name(cur_node, "text")){
+        if(xml_node_is_cheesypic_placeholder(cur_node)){
             xmlNode *text_node = xml_child_node_by_name(cur_node,"text");
             if(text_node){
                 unsigned id = strtol(text_node->children->content,NULL,10);
@@ -98,12 +98,10 @@ int load_design_from_file(design_t *design, const char *svg_design)
     memset(design,0,sizeof(design_t));
     design->doc = xmlReadFile(svg_design, NULL, 0);
     if(design->doc == NULL){
-        // xmlFreeDoc(design->doc); // file is freed elsewhere
         return 1;
     }
     design->root = xmlDocGetRootElement(design->doc);
     if(design->root == NULL){
-        // xmlFreeDoc(design->doc); // file is freed elsewhere
         return 1;
     }
 
@@ -152,11 +150,6 @@ int render_design(design_t *design, unsigned char **capture_data)
     cairo_t *design_ctx;
     cairo_status_t status;
 
-    // FILE *fp = fopen("design.svg", "w");
-    // fLOG(fp,"%s",xmlBufferContent(buffer));
-    // fclose(fp);
-
-    //handle = rsvg_handle_new_from_data(xmlBufferContent(buffer),xmlBufferLength(buffer),&error);
     handle = rsvg_handle_new_with_flags(RSVG_HANDLE_FLAG_UNLIMITED);
     if(handle == NULL){
         LOG("failed to create handle from data\n");
@@ -197,7 +190,6 @@ int render_design(design_t *design, unsigned char **capture_data)
 
     cairo_destroy (design_ctx);
     cairo_surface_destroy (design_surface);
-    //g_object_unref(handle);
     xmlBufferFree(buffer);
     return 1;
 }
@@ -206,7 +198,6 @@ void free_design(design_t *design)
 {
     xmlCleanupParser();
     free(design->photo_list);
-    //xmlFreeNode(design->root);
     xmlFreeDoc(design->doc);
 
 }
