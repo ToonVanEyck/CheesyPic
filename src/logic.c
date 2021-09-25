@@ -52,8 +52,8 @@ int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, phot
     alarm_var = 0;
     memset(config,0,sizeof(photobooth_config_t));
     memset(session,0,sizeof(photobooth_session_t));
-    config->preview_mirror = &shared_memory->preview_mirror;
-    config->reveal_mirror = &shared_memory->reveal_mirror;
+    config->mirror_liveview = &shared_memory->mirror_liveview;
+    config->mirror_preview = &shared_memory->mirror_preview;
     if(read_config(config,design_path,theme_path)){
         LOG("Error failed to configure the photobooth with the given design\n");
         return 1;
@@ -96,8 +96,8 @@ int read_config(photobooth_config_t *config, char *design_path, char *theme_path
 {
     config->countdown_delay.it_value.tv_sec = 1;
     config->preview_time.it_value.tv_sec = 3;
-    *config->preview_mirror = 1;
-    *config->reveal_mirror = 1;
+    *config->mirror_liveview = 1;
+    *config->mirror_preview = 1;
 
     if(load_theme_from_file(&config->theme, theme_path)) return 1;
     if(load_design_from_file(&config->design, design_path)) return 1;
@@ -135,16 +135,16 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
         LOG("logic active:   [%s]\n",shared_memory->photobooth_active?"YES":"NO");
     }
 
-    static int prev_preview_mirror = 2;
-    if(prev_preview_mirror != shared_memory->preview_mirror){
-        prev_preview_mirror = shared_memory->preview_mirror;
-        LOG("mirror preview: [%s]\n",shared_memory->preview_mirror?"YES":"NO");
+    static int prev_mirror_liveview = 2;
+    if(prev_mirror_liveview != shared_memory->mirror_liveview){
+        prev_mirror_liveview = shared_memory->mirror_liveview;
+        LOG("mirror preview: [%s]\n",shared_memory->mirror_liveview?"YES":"NO");
     }
 
-    static int prev_reveal_mirror = 2;
-    if(prev_reveal_mirror != shared_memory->reveal_mirror){
-        prev_reveal_mirror = shared_memory->reveal_mirror;
-        LOG("mirror reveal:  [%s]\n",shared_memory->reveal_mirror?"YES":"NO");
+    static int prev_mirror_preview = 2;
+    if(prev_mirror_preview != shared_memory->mirror_preview){
+        prev_mirror_preview = shared_memory->mirror_preview;
+        LOG("mirror reveal:  [%s]\n",shared_memory->mirror_preview?"YES":"NO");
     }
 
     static int prev_fastmode = 2;

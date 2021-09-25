@@ -27,8 +27,8 @@
 typedef struct{
     struct itimerval countdown_delay;
     struct itimerval preview_time;
-    unsigned char *preview_mirror;
-    unsigned char *reveal_mirror;
+    unsigned char *mirror_liveview;
+    unsigned char *mirror_preview;
     unsigned char printing_enabled;
     char *printer_driver_name;
     char *photo_output_directory;

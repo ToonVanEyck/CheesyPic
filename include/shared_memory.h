@@ -67,8 +67,8 @@ typedef struct{
 typedef struct{
     unsigned char photobooth_active;
     unsigned char fastmode;
-    unsigned char preview_mirror;
-    unsigned char reveal_mirror;
+    unsigned char mirror_liveview;
+    unsigned char mirror_preview;
     unsigned char toggle_printer;
     unsigned char exit_slow;
     int camera_error;

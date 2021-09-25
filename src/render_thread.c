@@ -5,9 +5,9 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *preview_mirror_mat ,GLuint *reveal_mirror_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
-void cleanup_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *preview_mirror_mat ,GLuint *reveal_mirror_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
-void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat ,GLuint preview_mirror_mat ,GLuint reveal_mirror_mat);
+int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *mirror_liveview_mat ,GLuint *mirror_preview_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
+void cleanup_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *mirror_liveview_mat ,GLuint *mirror_preview_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
+void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat ,GLuint mirror_liveview_mat ,GLuint mirror_preview_mat);
 
 
 static unsigned long readJpg(char *name, char **data){
@@ -59,16 +59,16 @@ static const char* vertex_shader_text =
 "attribute vec2 vPos;\n"
 "attribute vec2 texcoord;\n"
 "uniform  mat4 resize;\n"
-"uniform  mat2 preview_mirror;\n"
-"uniform  mat2 reveal_mirror;\n"
+"uniform  mat2 mirror_liveview;\n"
+"uniform  mat2 mirror_preview;\n"
 "varying vec3 color;\n"
 "varying vec2 tex_preview_coord;\n"
 "varying vec2 tex_overlay_coord;\n"
 "void main()\n"
 "{\n"
 "    gl_Position = resize * vec4(vPos, 0.0, 1.0);\n"
-"    tex_preview_coord = texcoord * preview_mirror;\n"
-"    tex_overlay_coord = texcoord * reveal_mirror;\n"
+"    tex_preview_coord = texcoord * mirror_liveview;\n"
+"    tex_overlay_coord = texcoord * mirror_preview;\n"
 "    color = vCol;\n"
 "}\n";
  
@@ -120,9 +120,9 @@ void start_render_thread(shared_memory_t *shared_memory)
     LOG("Started render thread!\n");
     signal(SIGINT, stop_render_thread);
     GLuint textures[NUM_TEXTURES];
-    GLuint program, resize_mat, preview_mirror_mat, reveal_mirror_mat, fragment_shader, vertex_shader, ebo, vbo;
+    GLuint program, resize_mat, mirror_liveview_mat, mirror_preview_mat, fragment_shader, vertex_shader, ebo, vbo;
     GLFWwindow* window;
-    init_render_thread(&window, textures, &program, &resize_mat, &preview_mirror_mat, &reveal_mirror_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
+    init_render_thread(&window, textures, &program, &resize_mat, &mirror_liveview_mat, &mirror_preview_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
 
     printf("OpenGL info:\n"
 	       "\tVendor   = \"%s\"\n"
@@ -133,8 +133,8 @@ void start_render_thread(shared_memory_t *shared_memory)
 	       glGetString(GL_VERSION));
 
     renderRunning = 1;
-    run_render_thread(shared_memory, &window,program, resize_mat, preview_mirror_mat, reveal_mirror_mat);
-    cleanup_render_thread(&window, textures, &program, &resize_mat, &preview_mirror_mat, &reveal_mirror_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
+    run_render_thread(shared_memory, &window,program, resize_mat, mirror_liveview_mat, mirror_preview_mat);
+    cleanup_render_thread(&window, textures, &program, &resize_mat, &mirror_liveview_mat, &mirror_preview_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
     LOG("Finished render thread!\n");
 }
 void stop_render_thread(int dummy)
@@ -147,7 +147,7 @@ GLFWmonitor* primaryMonitor;
 struct windowParams{int xpos; int ypos; int width; int height;};
 struct windowParams windowParams;
 
-int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, GLuint *resize_mat, GLuint *preview_mirror_mat, GLuint *reveal_mirror_mat, GLuint *fragment_shader, GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
+int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, GLuint *resize_mat, GLuint *mirror_liveview_mat, GLuint *mirror_preview_mat, GLuint *fragment_shader, GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
 {
     GLint vpos_location, vcol_location;
 
@@ -204,8 +204,8 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     // glBindFragDataLocation(*program, 0, "outColor");
     glLinkProgram(*program);
     *resize_mat = glGetUniformLocation(*program, "resize");
-    *preview_mirror_mat = glGetUniformLocation(*program, "preview_mirror");
-    *reveal_mirror_mat = glGetUniformLocation(*program, "reveal_mirror");
+    *mirror_liveview_mat = glGetUniformLocation(*program, "mirror_liveview");
+    *mirror_preview_mat = glGetUniformLocation(*program, "mirror_preview");
     vpos_location = glGetAttribLocation(*program, "vPos");
     vcol_location = glGetAttribLocation(*program, "vCol");
     GLint texAttrib = glGetAttribLocation(*program, "texcoord");
@@ -244,7 +244,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program ,GLuint *resize_mat, GLuint *preview_mirror_mat ,GLuint *reveal_mirror_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
+void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program ,GLuint *resize_mat, GLuint *mirror_liveview_mat ,GLuint *mirror_preview_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
 {
     glDeleteTextures(NUM_TEXTURES, textures);
     glDeleteProgram(*program);
@@ -256,7 +256,7 @@ void cleanup_render_thread(GLFWwindow **window, GLuint *textures,GLuint *program
     glfwTerminate();
 }
 
-void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat, GLuint preview_mirror_mat ,GLuint reveal_mirror_mat)
+void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat, GLuint mirror_liveview_mat ,GLuint mirror_preview_mat)
 {
     const struct timespec sem_timespec = {0,100000};
     mat4x4 m;
@@ -281,10 +281,10 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                 else{shared_memory->logic_state--;}
                 break;
             case 'l':
-                shared_memory->preview_mirror ^= 1;
+                shared_memory->mirror_liveview ^= 1;
                 break;
             case 'm':
-                shared_memory->reveal_mirror ^= 1;
+                shared_memory->mirror_preview ^= 1;
                 break;
             case 'f':
                 shared_memory->fastmode ^= 1;
@@ -323,7 +323,7 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
         
         vec2 mirror_preview[2]={{1,0},{0,1}};
         vec2 mirror_reveal[2]={{1,0},{0,1}};
-        mirror_preview[0][0] = (shared_memory->preview_mirror==1)?(-1):(1);
+        mirror_preview[0][0] = (shared_memory->mirror_liveview==1)?(-1):(1);
 
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
             if(shared_memory->logic_state != log_reveal  || !shared_memory->photobooth_active){
@@ -347,22 +347,22 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
                     shared_memory->overlay_buffer.raw_data);
              
                 glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
-                glUniformMatrix2fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
-                glUniformMatrix2fv(reveal_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
+                glUniformMatrix2fv(mirror_liveview_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
+                glUniformMatrix2fv(mirror_preview_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
                 glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
                 glfwSwapBuffers(*window);
             }else{
                 // -------- CAPTURE LOGIC --------
-                mirror_reveal[0][0] = (shared_memory->reveal_mirror==1)?(-1):(1);
+                mirror_reveal[0][0] = (shared_memory->mirror_preview==1)?(-1):(1);
                 glActiveTexture(GL_TEXTURE0);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shared_memory->capture_buffer.width, 
                             shared_memory->capture_buffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
                             shared_memory->capture_buffer.raw_data);
                 glUniform1i(glGetUniformLocation(program, "tex_overlay"), 0);
-                glUniformMatrix2fv(preview_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
-                glUniformMatrix2fv(reveal_mirror_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
+                glUniformMatrix2fv(mirror_liveview_mat, 1, GL_FALSE, (const GLfloat*) mirror_preview);
+                glUniformMatrix2fv(mirror_preview_mat, 1, GL_FALSE, (const GLfloat*) mirror_reveal);
                 glUniformMatrix4fv(resize_mat, 1, GL_FALSE, (const GLfloat*) m);
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                 glfwSwapBuffers(*window);
