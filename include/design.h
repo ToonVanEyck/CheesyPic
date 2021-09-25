@@ -26,10 +26,10 @@ typedef struct{
     photo_element_t *photo_list;
     xmlNode *root;
     xmlDoc *doc;
-}design_t;
+}cp_design_t;
 
-int load_design_from_file(design_t *design, const char *svg_design);
-int render_design(design_t *design, unsigned char **capture_data);
-void free_design(design_t *design);
+int load_design_from_file(cp_design_t *design, const char *svg_design);
+int render_design(cp_design_t *design, unsigned char **capture_data);
+void free_design(cp_design_t *design);
 
 #endif

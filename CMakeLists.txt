@@ -109,6 +109,9 @@ install(FILES ${CMAKE_BINARY_DIR}/AmaticSC-Bold.ttf ${CMAKE_BINARY_DIR}/AmaticSC
 # target_link_libraries(render_theme ${LibRSVG_LIBRARIES})
 
 # CONFIG PARSER EXAMPLE
-add_executable(config src/config.c)
+add_executable(config src/config.c src/design.c src/lodepng.c)
 target_link_libraries(config ${Glib_LIBRARIES})
+target_link_libraries(config ${LIBXML2_LIBRARIES})
+target_link_libraries(config ${LibRSVG_LIBRARIES})
+target_link_libraries(config ${B64_LIBRARIES})
 

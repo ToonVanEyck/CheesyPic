@@ -94,7 +94,7 @@ void free_logic(photobooth_config_t *config, printer_info_t *printer_info)
 
 int read_config(photobooth_config_t *config, char *design_path, char *theme_path)
 {
-    config->countdown_delay.it_value.tv_sec = 1;
+    config->countdown_time.it_value.tv_sec = 1;
     config->preview_time.it_value.tv_sec = 3;
     *config->mirror_liveview = 1;
     *config->mirror_preview = 1;
@@ -204,7 +204,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_3:
                 if(init_state){
-                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_time,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_countdown_2;
@@ -214,7 +214,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_2:
                 if(init_state){
-                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_time,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_countdown_1;
@@ -223,7 +223,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_countdown_1:
                 if(init_state){
-                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_time,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_capture;
@@ -240,7 +240,7 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
             case log_capture_failed:
                 if(init_state){
-                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_delay,NULL);
+                    setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_time,NULL);
                 }
                 if(alarm_var){
                     shared_memory->logic_state = log_countdown_3;

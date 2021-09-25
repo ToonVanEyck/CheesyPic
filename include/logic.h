@@ -25,7 +25,7 @@
 
 
 typedef struct{
-    struct itimerval countdown_delay;
+    struct itimerval countdown_time;
     struct itimerval preview_time;
     unsigned char *mirror_liveview;
     unsigned char *mirror_preview;
@@ -34,7 +34,7 @@ typedef struct{
     char *photo_output_directory;
     char *photo_output_name;
     theme_t theme;
-    design_t design;
+    cp_design_t design;
 }photobooth_config_t;
 
 typedef struct photobooth_session{
