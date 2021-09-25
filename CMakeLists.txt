@@ -87,7 +87,7 @@ target_link_libraries(cheesypic ${B64_LIBRARIES})
 install(TARGETS     cheesypic
         DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(FILES default.theme.svg template.design.svg
+install(FILES assets/default.theme.svg assets/template.design.svg configuration/cheesypic.conf
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
         DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${CMAKE_PROJECT_NAME}")
 
