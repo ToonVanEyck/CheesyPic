@@ -69,14 +69,14 @@ include_directories(.
     ${GDK-PixBuf_INCLUDE_DIR}
     ${Cairo_INCLUDE_DIR}
     ${B64_INCLUSDE_DIR}
-    "${glfw_SOURCE_DIR}/deps"
-    "include")
+    "${glfw_SOURCE_DIR}/deps")
 
 message(STATUS "glfw path: ${glfw_SOURCE_DIR}/deps" ...)
 
 # add_subdirectory(app)
 add_subdirectory(lib/cp_design)
 add_subdirectory(lib/cp_theme)
+add_subdirectory(app)
 
 # # PHOTOBOOTH
 # add_executable(cheesypic src/main.c src/capture_thread.c src/decode_thread.c src/render_thread.c src/logic.c src/lodepng.c src/printer.c src/design.c src/theme.c )
@@ -100,19 +100,6 @@ add_subdirectory(lib/cp_theme)
 # install(FILES ${CMAKE_BINARY_DIR}/AmaticSC-Bold.ttf ${CMAKE_BINARY_DIR}/AmaticSC-Regular.ttf
 #         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ 
 #         DESTINATION "/usr/local/share/fonts/")
-
-# # # SVG DESIGN RENDER EXAMPLE
-# # add_executable(svg_render src/svg_to_png.c src/design.c src/lodepng.c)
-# # target_link_libraries(svg_render ${GTK_LIBRARIES})
-# # target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
-# # target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
-# # target_link_libraries(svg_render ${B64_LIBRARIES})
-
-# # SVG THEME RENDER EXAMPLE
-# add_library(cp_design STATIC src/design.c src/lodepng.c)
-# # target_link_libraries(cp_design ${GTK_LIBRARIES})
-# target_link_libraries(cp_design ${LIBXML2_LIBRARIES})
-# target_link_libraries(cp_design ${LibRSVG_LIBRARIES})
 
 # # CONFIG PARSER EXAMPLE
 # add_executable(config app/src/config.c app/src/design.c app/src/lodepng.c)

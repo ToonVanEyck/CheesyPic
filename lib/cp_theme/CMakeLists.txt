@@ -1,4 +1,5 @@
-include_directories("include")
+include_directories(include)
+
 add_library(cp_theme STATIC src/theme.c)
 target_link_libraries(cp_theme ${LIBXML2_LIBRARIES})
 target_link_libraries(cp_theme ${LibRSVG_LIBRARIES})

@@ -6,19 +6,20 @@ target_link_libraries(cheesypic OpenGL::GL)
 target_link_libraries(cheesypic ${Gphoto2_LIBRARIES})
 target_link_libraries(cheesypic ${TurboJPEG_LIBRARIES})
 target_link_libraries(cheesypic ${JSONC_LIBRARY} )
-target_link_libraries(cheesypic ${LIBXML2_LIBRARIES})
-target_link_libraries(cheesypic ${GTK_LIBRARIES})
-target_link_libraries(cheesypic ${LibRSVG_LIBRARIES})
-target_link_libraries(cheesypic ${B64_LIBRARIES})
+target_link_libraries(cheesypic cp_design)
+target_link_libraries(cheesypic cp_theme)
 
-target_include_directories(cheesypic PUBLIC include )
+target_include_directories(cheesypic PUBLIC 
+        include 
+        ${CMAKE_SOURCE_DIR}/lib/cp_design/include
+        ${CMAKE_SOURCE_DIR}/lib/cp_theme/include)
 
 install(TARGETS     cheesypic
         DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(FILES   ${CMAKE_SRC_DIR}/assets/default.theme.svg 
-                ${CMAKE_SRC_DIR}/assets/template.design.svg 
-                ${CMAKE_SRC_DIR}/configuration/cheesypic.conf
+install(FILES   ${CMAKE_SOURCE_DIR}/assets/default.theme.svg 
+                ${CMAKE_SOURCE_DIR}/assets/template.design.svg 
+                ${CMAKE_SOURCE_DIR}/configuration/cheesypic.conf
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
         DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${CMAKE_PROJECT_NAME}")
 

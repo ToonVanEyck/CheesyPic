@@ -9,8 +9,6 @@
 #include <libxml/parser.h>
 #include <gobject/gobject.h>
 
-// #include "lodepng.h"
-
 #ifndef LOG
 #define LOG(...) do{fprintf(stderr,"theme: ");fprintf(stderr, __VA_ARGS__);}while(0)
 #endif

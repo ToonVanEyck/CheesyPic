@@ -7,9 +7,7 @@
 #include <libxml/parser.h>
 #include <b64/cencode.h>
 
-// #include "shared_memory.h"
 #include "theme.h"
-// #include "lodepng.h"
 
 #ifndef LOG
 #define LOG(...) do{fprintf(stderr,"theme: ");fprintf(stderr, __VA_ARGS__);}while(0)
