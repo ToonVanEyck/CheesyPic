@@ -1,5 +1,8 @@
 #include "design.h"
 
+static xmlNode *root; 
+static xmlDoc *doc;
+
 xmlNode *xml_child_node_by_name(xmlNode * a_node, const char *name)
 {
     xmlNode *cur_node = NULL;
@@ -40,7 +43,7 @@ int cnt_locations(xmlNode * a_node)
 {
     int cnt = 0;
     for (xmlNode *cur_node = a_node; cur_node; cur_node = cur_node->next) {
-        if(xml_node_is_cheesypic_placeholder(cur_node)){//xml_node_contains_child_with_name(cur_node, "rect") && xml_node_contains_child_with_name(cur_node, "text")){
+        if(xml_node_is_cheesypic_placeholder(cur_node)){
             cnt++;
         }
         cnt += cnt_locations(cur_node->children);
@@ -96,17 +99,17 @@ void prepare_photo_list(xmlNode * a_node,photo_element_t *photo_list, int *index
 int load_design_from_file(cp_design_t *design, const char *svg_design)
 {
     memset(design,0,sizeof(cp_design_t));
-    design->doc = xmlReadFile(svg_design, NULL, 0);
-    if(design->doc == NULL){
+    doc = xmlReadFile(svg_design, NULL, 0);
+    if(doc == NULL){
         return 1;
     }
-    design->root = xmlDocGetRootElement(design->doc);
-    if(design->root == NULL){
+    root = xmlDocGetRootElement(doc);
+    if(root == NULL){
         return 1;
     }
 
-    design->total_locations = cnt_locations(design->root);
-    cnt_photos(design->root,&design->total_photos);
+    design->total_locations = cnt_locations(root);
+    cnt_photos(root,&design->total_photos);
     LOG("%d unique photos spread over %d locations\n",design->total_photos,design->total_locations);
 
     design->photo_list = malloc(design->total_locations*sizeof(photo_element_t));
@@ -116,7 +119,7 @@ int load_design_from_file(cp_design_t *design, const char *svg_design)
     }
     memset(design->photo_list,0,design->total_locations*sizeof(photo_element_t*));
     int i = 0;
-    prepare_photo_list(design->root,design->photo_list,&i);
+    prepare_photo_list(root,design->photo_list,&i);
 
     return 0;
 }
@@ -125,7 +128,7 @@ int render_design(cp_design_t *design, unsigned char **capture_data)
 {
     // REPLACE IMAGES!!
     xmlNs *xlink_ns = NULL;
-    for (xmlNs *cur_ns = design->root->nsDef; cur_ns; cur_ns = cur_ns->next) {
+    for (xmlNs *cur_ns = root->nsDef; cur_ns; cur_ns = cur_ns->next) {
         if(cur_ns->prefix && !strcmp(cur_ns->prefix,"xlink")){
             xlink_ns = cur_ns;
             break;
@@ -141,7 +144,7 @@ int render_design(cp_design_t *design, unsigned char **capture_data)
     }
 
     xmlBuffer *buffer = xmlBufferCreate();
-    xmlNodeDump(buffer,design->doc,design->root,0,0);
+    xmlNodeDump(buffer,doc,root,0,0);
     RsvgHandle *handle;
     GError *error = NULL;
     RsvgDimensionData dim;
@@ -198,6 +201,6 @@ void free_design(cp_design_t *design)
 {
     xmlCleanupParser();
     free(design->photo_list);
-    xmlFreeDoc(design->doc);
+    xmlFreeDoc(doc);
 
 }

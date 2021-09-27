@@ -47,6 +47,7 @@ find_package(TurboJPEG REQUIRED)
 find_package(LibXml2 REQUIRED)
 find_package(JSONC REQUIRED)
 find_package(Glib REQUIRED)
+find_package(GObject REQUIRED)
 find_package(LibRSVG REQUIRED)
 find_package(B64 REQUIRED)
 
@@ -63,6 +64,7 @@ include_directories(.
     ${LIBXML2_INCLUDE_DIRS} 
     ${JSONC_INCLUDE_DIR} 
     ${Glib_INCLUDE_DIRS}
+    ${GOBJECT_INCLUDE_DIR}
     ${LibRSVG_INCLUDE_DIR}
     ${GDK-PixBuf_INCLUDE_DIR}
     ${Cairo_INCLUDE_DIR}
@@ -72,46 +74,50 @@ include_directories(.
 
 message(STATUS "glfw path: ${glfw_SOURCE_DIR}/deps" ...)
 
-# PHOTOBOOTH
-add_executable(cheesypic src/main.c src/capture_thread.c src/decode_thread.c src/render_thread.c src/logic.c src/lodepng.c src/printer.c src/design.c src/theme.c )
-target_link_libraries(cheesypic glfw)
-target_link_libraries(cheesypic OpenGL::GL)
-target_link_libraries(cheesypic ${Gphoto2_LIBRARIES})
-target_link_libraries(cheesypic ${TurboJPEG_LIBRARIES})
-target_link_libraries(cheesypic ${JSONC_LIBRARY} )
-target_link_libraries(cheesypic ${LIBXML2_LIBRARIES})
-target_link_libraries(cheesypic ${GTK_LIBRARIES})
-target_link_libraries(cheesypic ${LibRSVG_LIBRARIES})
-target_link_libraries(cheesypic ${B64_LIBRARIES})
+# add_subdirectory(app)
+add_subdirectory(lib/cp_design)
+add_subdirectory(lib/cp_theme)
 
-install(TARGETS     cheesypic
-        DESTINATION ${CMAKE_INSTALL_BINDIR})
+# # PHOTOBOOTH
+# add_executable(cheesypic src/main.c src/capture_thread.c src/decode_thread.c src/render_thread.c src/logic.c src/lodepng.c src/printer.c src/design.c src/theme.c )
+# target_link_libraries(cheesypic glfw)
+# target_link_libraries(cheesypic OpenGL::GL)
+# target_link_libraries(cheesypic ${Gphoto2_LIBRARIES})
+# target_link_libraries(cheesypic ${TurboJPEG_LIBRARIES})
+# target_link_libraries(cheesypic ${JSONC_LIBRARY} )
+# target_link_libraries(cheesypic ${LIBXML2_LIBRARIES})
+# target_link_libraries(cheesypic ${GTK_LIBRARIES})
+# target_link_libraries(cheesypic ${LibRSVG_LIBRARIES})
+# target_link_libraries(cheesypic ${B64_LIBRARIES})
 
-install(FILES assets/default.theme.svg assets/template.design.svg configuration/cheesypic.conf
-        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
-        DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${CMAKE_PROJECT_NAME}")
+# install(TARGETS     cheesypic
+#         DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(FILES ${CMAKE_BINARY_DIR}/AmaticSC-Bold.ttf ${CMAKE_BINARY_DIR}/AmaticSC-Regular.ttf
-        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ 
-        DESTINATION "/usr/local/share/fonts/")
+# install(FILES assets/default.theme.svg assets/template.design.svg configuration/cheesypic.conf
+#         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
+#         DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/${CMAKE_PROJECT_NAME}")
 
-# # SVG DESIGN RENDER EXAMPLE
-# add_executable(svg_render src/svg_to_png.c src/design.c src/lodepng.c)
-# target_link_libraries(svg_render ${GTK_LIBRARIES})
-# target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
-# target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
-# target_link_libraries(svg_render ${B64_LIBRARIES})
+# install(FILES ${CMAKE_BINARY_DIR}/AmaticSC-Bold.ttf ${CMAKE_BINARY_DIR}/AmaticSC-Regular.ttf
+#         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ 
+#         DESTINATION "/usr/local/share/fonts/")
+
+# # # SVG DESIGN RENDER EXAMPLE
+# # add_executable(svg_render src/svg_to_png.c src/design.c src/lodepng.c)
+# # target_link_libraries(svg_render ${GTK_LIBRARIES})
+# # target_link_libraries(svg_render ${LIBXML2_LIBRARIES})
+# # target_link_libraries(svg_render ${LibRSVG_LIBRARIES})
+# # target_link_libraries(svg_render ${B64_LIBRARIES})
 
 # # SVG THEME RENDER EXAMPLE
-# add_executable(render_theme src/render_theme.c src/design.c src/lodepng.c)
-# target_link_libraries(render_theme ${GTK_LIBRARIES})
-# target_link_libraries(render_theme ${LIBXML2_LIBRARIES})
-# target_link_libraries(render_theme ${LibRSVG_LIBRARIES})
+# add_library(cp_design STATIC src/design.c src/lodepng.c)
+# # target_link_libraries(cp_design ${GTK_LIBRARIES})
+# target_link_libraries(cp_design ${LIBXML2_LIBRARIES})
+# target_link_libraries(cp_design ${LibRSVG_LIBRARIES})
 
-# CONFIG PARSER EXAMPLE
-add_executable(config src/config.c src/design.c src/lodepng.c)
-target_link_libraries(config ${Glib_LIBRARIES})
-target_link_libraries(config ${LIBXML2_LIBRARIES})
-target_link_libraries(config ${LibRSVG_LIBRARIES})
-target_link_libraries(config ${B64_LIBRARIES})
+# # CONFIG PARSER EXAMPLE
+# add_executable(config app/src/config.c app/src/design.c app/src/lodepng.c)
+# target_link_libraries(config ${Glib_LIBRARIES})
+# target_link_libraries(config ${LIBXML2_LIBRARIES})
+# target_link_libraries(config ${LibRSVG_LIBRARIES})
+# target_link_libraries(config ${B64_LIBRARIES})
 

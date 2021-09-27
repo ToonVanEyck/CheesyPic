@@ -302,9 +302,6 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                     // /* we want to print the encoded data, so null-terminate it: */
                     *c = 0;
 
-                    // FILE *fp = fopen("base64.txt", "w");
-                    // fLOG(fp,"%s",session->capture_data[session->photo_counter-1]);
-                    // fclose(fp);
 
                     shared_memory->capture_buffer.jpeg_copied = 1;
                 }
