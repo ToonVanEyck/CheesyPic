@@ -3,27 +3,15 @@
 #include "decode_thread.h"
 #include "capture_thread.h"
 #include "shared_memory.h"
+#include "config.h"
 
 int main(int argc, char *argv[])
 {
     int exit_code = EXIT_SUCCESS;
-    #ifdef NO_CAM
-        LOG("Not using camera!\n");
-    #endif
-    // check requirments
-
-    if(argc != 2){
-        LOG("ERROR: Please supply a design directory.\n");
-        exit(EXIT_FAILURE);
-    }
-    char design_path[512]={0};
-    if(get_latest_design(argv[1],design_path)) exit(EXIT_FAILURE);
-    char theme_path[512]={0};
-    if(get_latest_theme(argv[1],theme_path))   exit(EXIT_FAILURE);
-    // setup ipc
+    // Init shared memory
     LOG("allocating %ld bytes of shared memory.\n",sizeof(shared_memory_t));
     shared_memory_t *shared_memory = mmap(NULL, sizeof(shared_memory_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    // init semaphores
+    // Init semaphores
     sem_init(&shared_memory->sem_decode,0,0);
     sem_init(&shared_memory->sem_render,1,0);
     sem_init(&shared_memory->sem_logic,1,0);
@@ -33,14 +21,35 @@ int main(int argc, char *argv[])
     #ifdef FAST_MODE
         shared_memory->fastmode = 1;
     #endif
-    // initialise printer data
-    printer_info_t printer_info;
-    photobooth_config_t config;
-    photobooth_session_t session;
-    if(init_logic(shared_memory, &config, &session, &printer_info, design_path, theme_path)){
+    // Read configuration file
+    config_t config;
+    if(read_config(&config)){
+        LOG("Failed to parse config file!\n");
         exit_code = EXIT_FAILURE; 
         goto cleanup;
     }
+    // Init printer data
+    printer_info_t printer_info;
+    if(get_printer_driver_name(&config.printer_driver_name)){
+        LOG("No default printer...\n");
+        exit_code = EXIT_FAILURE; 
+        goto cleanup;
+    }
+    is_printing_finished(config.printer_driver_name,&printer_info);
+    if(!printer_info.connected){
+        LOG("Error [%s] printer not connected.\n",config.printer_driver_name);
+        config.printing_enabled = 0;
+    }
+    // Init session data
+    session_t session;
+    memset(&session,0,sizeof(session_t));
+    session.jpg_capture = malloc(sizeof(char *)*config.design.total_photos);
+    if(session.jpg_capture == NULL){
+        LOG("Error couldn't allocate memory for session\n");
+        exit_code = EXIT_FAILURE; 
+        goto cleanup;
+    }
+    init_logic();
     // start threads
     pid_t capture_pid = fork();
     LOG("capture_pid %d -- %d\n",capture_pid,getpid());
@@ -87,7 +96,8 @@ cleanup:
     sem_destroy(&shared_memory->sem_render);
     sem_destroy(&shared_memory->sem_logic);
 
-    free_logic((void*)&config, &printer_info);
+    free_config(&config);
+    free(printer_info.deck);
 
     if(shared_memory->exit_slow)sleep(20);
     exit(exit_code);

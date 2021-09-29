@@ -264,7 +264,7 @@ void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int 
                     #ifdef NO_CAM
                         static unsigned char load_capture_cnt = 0;
                         char capture_path[100]={0};
-                        snprintf(capture_path,100,"../kittens/%d.jpg",load_capture_cnt%3+1);
+                        snprintf(capture_path,100,"../assets/kittens/%d.jpg",load_capture_cnt%3+1);
                         shared_memory->capture_buffer.size = readJpg(capture_path, (char *)shared_memory->capture_buffer.jpeg_buffer);
                         load_capture_cnt++;
                         shared_memory->logic_state = log_decode;

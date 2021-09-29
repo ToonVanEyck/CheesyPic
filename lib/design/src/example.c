@@ -6,8 +6,8 @@ int main(char argc, char **argv){
         printf("usage: %s my_design.design.svg image.jpg\n",argv[0]);
         return 1;
     }
-    cp_design_t cp_design;
-    load_design_from_file(&cp_design, argv[1]);
+    design_t design;
+    load_design_from_file(&design, argv[1]);
 
     FILE *img;
     img = fopen(argv[2], "rb");
@@ -20,8 +20,8 @@ int main(char argc, char **argv){
     fseek(img, 0, SEEK_END);
     size_t size = ftell(img);
 
-    jpg_photo_t *jpg_photo = malloc(cp_design.total_photos * sizeof(jpg_photo_t));
-    for(int i=0; i<cp_design.total_photos; i++){
+    jpg_photo_t *jpg_photo = malloc(design.total_photos * sizeof(jpg_photo_t));
+    for(int i=0; i<design.total_photos; i++){
         fseek(img, 0, SEEK_SET);
         jpg_photo[i].size = size;
         jpg_photo[i].data = malloc(size); // allocate enough memory.
@@ -30,13 +30,13 @@ int main(char argc, char **argv){
     }
     fclose(img);
 
-    // render_design(&cp_design,jpg_photo);
-    render_design(&cp_design,jpg_photo);
+    // render_design(&design,jpg_photo);
+    render_design(&design,jpg_photo);
 
-    for(int i=0; i<cp_design.total_photos; i++){
+    for(int i=0; i<design.total_photos; i++){
         free(jpg_photo[i].data);
     }
     free(jpg_photo);
 
-    free_design(&cp_design);
+    free_design(&design);
 }

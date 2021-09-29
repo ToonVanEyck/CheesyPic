@@ -7,7 +7,6 @@ int main(char argc, char **argv){
         return 1;
     }
     theme_t theme;
-    memset(&theme,0,sizeof(theme_t));
     load_theme_from_file(&theme, argv[1]);
     free_theme(&theme);
     return 0;

@@ -549,15 +549,15 @@ typedef struct LodePNGInfo {
   To avoid this do not set an ICC profile in the image unless there is a good reason for it, and when doing so
   make sure you compute it carefully to avoid the above problems.
   */
-  unsigned iccp_defined;      /* Whether an iCCP chunk is present (0 = not present, 1 = present). */
-  char* iccp_name;            /* Null terminated string with profile name, 1-79 bytes */
+  unsigned icdefined;      /* Whether an iCCP chunk is present (0 = not present, 1 = present). */
+  char* icname;            /* Null terminated string with profile name, 1-79 bytes */
   /*
-  The ICC profile in iccp_profile_size bytes.
+  The ICC profile in icprofile_size bytes.
   Don't allocate this buffer yourself. Use the init/cleanup functions
   correctly and use lodepng_set_icc and lodepng_clear_icc.
   */
-  unsigned char* iccp_profile;
-  unsigned iccp_profile_size; /* The size of iccp_profile in bytes */
+  unsigned char* icprofile;
+  unsigned icprofile_size; /* The size of icprofile in bytes */
 
   /* End of color profile related chunks */
 

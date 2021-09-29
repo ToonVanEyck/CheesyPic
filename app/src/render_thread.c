@@ -111,7 +111,7 @@ static void window_focus_callback(GLFWwindow* window, int focused)
     }
     else
     {
-        glfwFocusWindow(window);
+        // glfwFocusWindow(window);
     }
 }
 

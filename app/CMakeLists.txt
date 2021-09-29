@@ -1,18 +1,22 @@
 file(GLOB app_src src/*.c )
 
+add_definitions(-DNO_CAM)
+# add_definitions(-DFAST_MODE)
+add_definitions(-DSTART_WINDOWED)
+
 add_executable(cheesypic  ${app_src})
 target_link_libraries(cheesypic glfw)
 target_link_libraries(cheesypic OpenGL::GL)
 target_link_libraries(cheesypic ${Gphoto2_LIBRARIES})
 target_link_libraries(cheesypic ${TurboJPEG_LIBRARIES})
 target_link_libraries(cheesypic ${JSONC_LIBRARY} )
-target_link_libraries(cheesypic cp_design)
-target_link_libraries(cheesypic cp_theme)
+target_link_libraries(cheesypic design)
+target_link_libraries(cheesypic theme)
 
 target_include_directories(cheesypic PUBLIC 
         include 
-        ${CMAKE_SOURCE_DIR}/lib/cp_design/include
-        ${CMAKE_SOURCE_DIR}/lib/cp_theme/include)
+        ${CMAKE_SOURCE_DIR}/lib/design/include
+        ${CMAKE_SOURCE_DIR}/lib/theme/include)
 
 install(TARGETS     cheesypic
         DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -2981,30 +2981,30 @@ unsigned lodepng_add_itext(LodePNGInfo* info, const char* key, const char* langt
 static unsigned lodepng_assign_icc(LodePNGInfo* info, const char* name, const unsigned char* profile, unsigned profile_size) {
   if(profile_size == 0) return 100; /*invalid ICC profile size*/
 
-  info->iccp_name = alloc_string(name);
-  info->iccp_profile = (unsigned char*)lodepng_malloc(profile_size);
+  info->icname = alloc_string(name);
+  info->icprofile = (unsigned char*)lodepng_malloc(profile_size);
 
-  if(!info->iccp_name || !info->iccp_profile) return 83; /*alloc fail*/
+  if(!info->icname || !info->icprofile) return 83; /*alloc fail*/
 
-  lodepng_memcpy(info->iccp_profile, profile, profile_size);
-  info->iccp_profile_size = profile_size;
+  lodepng_memcpy(info->icprofile, profile, profile_size);
+  info->icprofile_size = profile_size;
 
   return 0; /*ok*/
 }
 
 unsigned lodepng_set_icc(LodePNGInfo* info, const char* name, const unsigned char* profile, unsigned profile_size) {
-  if(info->iccp_name) lodepng_clear_icc(info);
-  info->iccp_defined = 1;
+  if(info->icname) lodepng_clear_icc(info);
+  info->icdefined = 1;
 
   return lodepng_assign_icc(info, name, profile, profile_size);
 }
 
 void lodepng_clear_icc(LodePNGInfo* info) {
-  string_cleanup(&info->iccp_name);
-  lodepng_free(info->iccp_profile);
-  info->iccp_profile = NULL;
-  info->iccp_profile_size = 0;
-  info->iccp_defined = 0;
+  string_cleanup(&info->icname);
+  lodepng_free(info->icprofile);
+  info->icprofile = NULL;
+  info->icprofile_size = 0;
+  info->icdefined = 0;
 }
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
 
@@ -3026,9 +3026,9 @@ void lodepng_info_init(LodePNGInfo* info) {
   info->gama_defined = 0;
   info->chrm_defined = 0;
   info->srgb_defined = 0;
-  info->iccp_defined = 0;
-  info->iccp_name = NULL;
-  info->iccp_profile = NULL;
+  info->icdefined = 0;
+  info->icname = NULL;
+  info->icprofile = NULL;
 
   LodePNGUnknownChunks_init(info);
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
@@ -3055,8 +3055,8 @@ unsigned lodepng_info_copy(LodePNGInfo* dest, const LodePNGInfo* source) {
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
   CERROR_TRY_RETURN(LodePNGText_copy(dest, source));
   CERROR_TRY_RETURN(LodePNGIText_copy(dest, source));
-  if(source->iccp_defined) {
-    CERROR_TRY_RETURN(lodepng_assign_icc(dest, source->iccp_name, source->iccp_profile, source->iccp_profile_size));
+  if(source->icdefined) {
+    CERROR_TRY_RETURN(lodepng_assign_icc(dest, source->icname, source->icprofile, source->icprofile_size));
   }
 
   LodePNGUnknownChunks_init(dest);
@@ -4636,18 +4636,18 @@ static unsigned readChunk_iCCP(LodePNGInfo* info, const LodePNGDecompressSetting
 
   unsigned length, string2_begin;
 
-  info->iccp_defined = 1;
-  if(info->iccp_name) lodepng_clear_icc(info);
+  info->icdefined = 1;
+  if(info->icname) lodepng_clear_icc(info);
 
   for(length = 0; length < chunkLength && data[length] != 0; ++length) ;
   if(length + 2 >= chunkLength) return 75; /*no null termination, corrupt?*/
   if(length < 1 || length > 79) return 89; /*keyword too short or long*/
 
-  info->iccp_name = (char*)lodepng_malloc(length + 1);
-  if(!info->iccp_name) return 83; /*alloc fail*/
+  info->icname = (char*)lodepng_malloc(length + 1);
+  if(!info->icname) return 83; /*alloc fail*/
 
-  info->iccp_name[length] = 0;
-  for(i = 0; i != length; ++i) info->iccp_name[i] = (char)data[i];
+  info->icname[length] = 0;
+  for(i = 0; i != length; ++i) info->icname[i] = (char)data[i];
 
   if(data[length + 1] != 0) return 72; /*the 0 byte indicating compression must be 0*/
 
@@ -4655,11 +4655,11 @@ static unsigned readChunk_iCCP(LodePNGInfo* info, const LodePNGDecompressSetting
   if(string2_begin > chunkLength) return 75; /*no null termination, corrupt?*/
 
   length = (unsigned)chunkLength - string2_begin;
-  error = zlib_decompress(&info->iccp_profile, &size, 0,
+  error = zlib_decompress(&info->icprofile, &size, 0,
                           &data[string2_begin],
                           length, zlibsettings);
-  info->iccp_profile_size = size;
-  if(!error && !info->iccp_profile_size) error = 100; /*invalid ICC profile size*/
+  info->icprofile_size = size;
+  if(!error && !info->icprofile_size) error = 100; /*invalid ICC profile size*/
   return error;
 }
 #endif /*LODEPNG_COMPILE_ANCILLARY_CHUNKS*/
@@ -5309,17 +5309,17 @@ static unsigned addChunk_iCCP(ucvector* out, const LodePNGInfo* info, LodePNGCom
   unsigned char* chunk = 0;
   unsigned char* compressed = 0;
   size_t compressedsize = 0;
-  size_t keysize = lodepng_strlen(info->iccp_name);
+  size_t keysize = lodepng_strlen(info->icname);
 
   if(keysize < 1 || keysize > 79) return 89; /*error: invalid keyword size*/
   error = zlib_compress(&compressed, &compressedsize,
-                        info->iccp_profile, info->iccp_profile_size, zlibsettings);
+                        info->icprofile, info->icprofile_size, zlibsettings);
   if(!error) {
     size_t size = keysize + 2 + compressedsize;
     error = lodepng_chunk_init(&chunk, out, size, "iCCP");
   }
   if(!error) {
-    lodepng_memcpy(chunk + 8, info->iccp_name, keysize);
+    lodepng_memcpy(chunk + 8, info->icname, keysize);
     chunk[8 + keysize] = 0; /*null termination char*/
     chunk[9 + keysize] = 0; /*compression method: 0*/
     lodepng_memcpy(chunk + 10 + keysize, compressed, compressedsize);
@@ -5808,14 +5808,14 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
     LodePNGColorStats stats;
     lodepng_color_stats_init(&stats);
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
-    if(info_png->iccp_defined &&
-        isGrayICCProfile(info_png->iccp_profile, info_png->iccp_profile_size)) {
+    if(info_png->icdefined &&
+        isGrayICCProfile(info_png->icprofile, info_png->icprofile_size)) {
       /*the PNG specification does not allow to use palette with a GRAY ICC profile, even
       if the palette has only gray colors, so disallow it.*/
       stats.allow_palette = 0;
     }
-    if(info_png->iccp_defined &&
-        isRGBICCProfile(info_png->iccp_profile, info_png->iccp_profile_size)) {
+    if(info_png->icdefined &&
+        isRGBICCProfile(info_png->icprofile, info_png->icprofile_size)) {
       /*the PNG specification does not allow to use grayscale color with RGB ICC profile, so disallow gray.*/
       stats.allow_greyscale = 0;
     }
@@ -5846,9 +5846,9 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
 #endif /* LODEPNG_COMPILE_ANCILLARY_CHUNKS */
   }
 #ifdef LODEPNG_COMPILE_ANCILLARY_CHUNKS
-  if(info_png->iccp_defined) {
-    unsigned gray_icc = isGrayICCProfile(info_png->iccp_profile, info_png->iccp_profile_size);
-    unsigned rgb_icc = isRGBICCProfile(info_png->iccp_profile, info_png->iccp_profile_size);
+  if(info_png->icdefined) {
+    unsigned gray_icc = isGrayICCProfile(info_png->icprofile, info_png->icprofile_size);
+    unsigned rgb_icc = isRGBICCProfile(info_png->icprofile, info_png->icprofile_size);
     unsigned gray_png = info.color.colortype == LCT_GREY || info.color.colortype == LCT_GREY_ALPHA;
     if(!gray_icc && !rgb_icc) {
       state->error = 100; /* Disallowed profile color type for PNG */
@@ -5894,7 +5894,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
       if(state->error) goto cleanup;
     }
     /*color profile chunks must come before PLTE */
-    if(info.iccp_defined) {
+    if(info.icdefined) {
       state->error = addChunk_iCCP(&outv, &info, &state->encoder.zlibsettings);
       if(state->error) goto cleanup;
     }

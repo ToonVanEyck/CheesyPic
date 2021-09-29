@@ -19,23 +19,25 @@
 #endif
 
 #include "design.h"
+#include "theme.h"
 
 #define CONFIG_FILE "/usr/local/etc/cheesypic/cheesypic.conf"
 
 typedef struct{
     struct itimerval countdown_time;
     struct itimerval preview_time;
-    unsigned char *mirror_liveview;
-    unsigned char *mirror_preview;
+    unsigned char mirror_liveview;
+    unsigned char mirror_preview;
     unsigned char printing_enabled;
     char *printer_driver_name;
-    char *photo_output_directory;
-    char *photo_output_name;
-    // cp_theme_t theme;
-    cp_design_t cp_design;
-}cp_config_t;
+    char *save_path_and_prefix;
+    unsigned char save_photos;
+    theme_t theme;
+    design_t design;
+}config_t;
 
-int read_config(cp_config_t *cp_config);
+int read_config(config_t *config);
 int get_recent_file_in_dir(char **file, char *directory, char *file_extention);
+void free_config(config_t *config);
 
 #endif

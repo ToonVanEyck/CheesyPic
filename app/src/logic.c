@@ -15,7 +15,6 @@ static unsigned long writeJpg(char *name, const char *data, unsigned long size){
         LOG("Unable to open file %s\n", name);
         return 1;
     }
-    
     fwrite(data, size, 1, file);
     fclose(file);
     return size;
@@ -41,80 +40,10 @@ char* get_state_name(logic_state_t i)
     return "UNDEFINED";
 }
 
-int init_logic(shared_memory_t *shared_memory, photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info, char *design_path, char *theme_path)
+void init_logic()
 {
     signal(SIGALRM, alarm_capture);
-
-    printer_info->nuf_of_decks = 2;
-    printer_info->deck = malloc(printer_info->nuf_of_decks * sizeof(deck_info_t));
-    memset(printer_info->deck,0,printer_info->nuf_of_decks * sizeof(deck_info_t));
-
     alarm_var = 0;
-    memset(config,0,sizeof(photobooth_config_t));
-    memset(session,0,sizeof(photobooth_session_t));
-    config->mirror_liveview = &shared_memory->mirror_liveview;
-    config->mirror_preview = &shared_memory->mirror_preview;
-    if(read_config(config,design_path,theme_path)){
-        LOG("Error failed to configure the photobooth with the given design\n");
-        return 1;
-    }
-    session->capture_data = malloc(sizeof(char *)*config->design.total_photos);
-    if(session->capture_data == NULL){
-        LOG("Error couldn't allocate memory for session\n");
-        return 1;
-    }
-
-    if(get_printer_driver_name(&config->printer_driver_name)){
-        LOG("No default printer...\n");
-        return 1;
-    }
-    is_printing_finished(config->printer_driver_name,printer_info);
-    if(!printer_info->connected){
-        LOG("Error [%s] printer not connected.\n",config->printer_driver_name);
-    } 
-    config->printing_enabled = 0;
-    shared_memory->toggle_printer = 1;
-
-    return 0;
-}
-
-void free_logic(photobooth_config_t *config, printer_info_t *printer_info)
-{
-    //config
-    if(config->printer_driver_name){
-        free(config->printer_driver_name);
-        config->printer_driver_name = NULL;
-    }
-    free_theme(&config->theme);
-    free_design(&config->design);
-    //printer_info
-    free(printer_info->deck);
-    printer_info->deck = NULL;
-}
-
-int read_config(photobooth_config_t *config, char *design_path, char *theme_path)
-{
-    config->countdown_time.it_value.tv_sec = 1;
-    config->preview_time.it_value.tv_sec = 3;
-    *config->mirror_liveview = 1;
-    *config->mirror_preview = 1;
-
-    if(load_theme_from_file(&config->theme, theme_path)) return 1;
-    if(load_design_from_file(&config->design, design_path)) return 1;
-
-    LOG("cairo version: %s\n",cairo_version_string ());
-
-    //output parameters
-    char *split1 = strrchr(design_path,'/');
-    //*split1 = 0;
-    char *split2 = strrchr(split1+1,'.');
-    *split2 = 0;
-    strcpy(split2+1,split1+1);
-    config->photo_output_directory = design_path;
-    config->photo_output_name = split1+1;
-    mkdir(config->photo_output_directory,0777);
-
-    return 0;
 }
 
 void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
@@ -124,7 +53,7 @@ void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
     memcpy(&dest->raw_data,src->data,src->width*src->height*4);
 }
 
-void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photobooth_session_t *session, printer_info_t *printer_info)
+void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *session, printer_info_t *printer_info)
 {
     static logic_state_t prev_logic_state = -1;
     int init_state = (prev_logic_state != shared_memory->logic_state);
@@ -233,9 +162,6 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
             case log_capture:
                 // handled in capture thread
                 if(init_state){
-                    //for(int i = 0;i<NUM_JPEG_BUFFERS;i++)shared_memory->preview_buffer[0].pre_state = pre_render;
-                    // LOG("captured %d/%d photos.\n",session->photo_counter+1,config->design.total_photos);
-                    // session->photo_counter++;
                 }
                 break;
             case log_capture_failed:
@@ -259,50 +185,23 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 if(init_state){
                     setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->preview_time,NULL);
                     // save image
-                    char capture_path[128]={0};
+                    char capture_path[256]={0};
                     time_t now;
                     struct tm ts;
                     time(&now);
                     ts = *localtime(&now);
-                    sprintf(capture_path,"%s/%s",config->photo_output_directory,config->photo_output_name);
-                    strftime(&capture_path[strlen(capture_path)], sizeof(capture_path), "_%y%m%d_%H%M%S", &ts);
+                    sprintf(capture_path,"%s",config->save_path_and_prefix);
+                    strftime(&capture_path[strlen(capture_path)], sizeof(capture_path), "%y%m%d_%H%M%S", &ts);
                     sprintf(&capture_path[strlen(capture_path)],"_%d.jpg",session->photo_counter);
-                    #ifndef NO_SAVE
+                    printf("%s\n",capture_path);
+                    if(config->save_photos){
                         writeJpg(capture_path,(const char *)shared_memory->capture_buffer.jpeg_buffer,shared_memory->capture_buffer.size);
-                    #endif
-                    // encode base64 image
-                    /* set up a destination buffer large enough to hold the encoded data */
-                    int encoded_size = 32 + 2*shared_memory->capture_buffer.size;
-                    LOG("original size %ld --> base 64size %d\n",shared_memory->capture_buffer.size,encoded_size);
-                    session->capture_data[session->photo_counter-1] = malloc(encoded_size);
-                    if(session->capture_data[session->photo_counter-1] == NULL){
-                        LOG("failed to allocate memory for capture copy");
-                        exit(1);
                     }
-                    strcpy(session->capture_data[session->photo_counter-1],"data:image/jpeg;base64,");
-                    /* keep track of our encoded position */
-                    char* c = session->capture_data[session->photo_counter-1]+23;
-                    /* store the number of bytes encoded by a single call */
-                    int cnt = 0;
-                    /* we need an encoder state */
-                    base64_encodestate s;
-
-                    /*---------- START ENCODING ----------*/
-                    /* initialise the encoder state */
-                    base64_init_encodestate(&s);
-                    /* gather data from the input and send it to the output */
-                    cnt = base64_encode_block(shared_memory->capture_buffer.jpeg_buffer, shared_memory->capture_buffer.size, c, &s);
-                    c += cnt;
-                    /* since we have encoded the entire input string, we know that 
-                    there is no more input data; finalise the encoding */
-                    cnt = base64_encode_blockend(c, &s);
-                    c += cnt;
-                    /*---------- STOP ENCODING  ----------*/
-
-                    // /* we want to print the encoded data, so null-terminate it: */
-                    *c = 0;
-
-
+                    printf("%d\n",session->photo_counter-1);
+                    printf("%ld\n",shared_memory->capture_buffer.size);
+                    session->jpg_capture[session->photo_counter-1].size = shared_memory->capture_buffer.size;
+                    session->jpg_capture[session->photo_counter-1].data = malloc(session->jpg_capture[session->photo_counter-1].size);
+                    memcpy(session->jpg_capture[session->photo_counter-1].data,shared_memory->capture_buffer.jpeg_buffer,session->jpg_capture[session->photo_counter-1].size);
                     shared_memory->capture_buffer.jpeg_copied = 1;
                 }
                 if(alarm_var && shared_memory->capture_buffer.jpeg_copied == 0){
@@ -313,44 +212,18 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
 
             case log_procces:
                 if(init_state){
-                        render_design(&config->design,session->capture_data);
-                        for(int i = 0; i<config->design.total_photos;i++){
-                            free(session->capture_data[i]);
-                        }
-
-                        // FILE *source, *target;
-                        // source = fopen("../kittens/2.jpg", "rb");
-                        // if( source == NULL )
-                        // {
-                        //     LOG("Failed to open src file...\n");
-                        //     break;
-                        // }
-                        // target = fopen("print_me.jpg", "wb+");
-                        // if( target == NULL )
-                        // {
-                        //     fclose(source);
-                        //     LOG("Failed to open dest file...\n");
-                        //     break;
-                        // }
-                        // size_t n, m;
-                        // unsigned char buff[8192];
-                        // do {
-                        //     n = fread(buff, 1, sizeof buff, source);
-                        //     if (n) m = fwrite(buff, 1, n, target);
-                        //     else   m = 0;
-                        // } while ((n > 0) && (n == m));
-                        // if (m) perror("copy");
-                        // LOG("File copied successfully.\n");
-                        // fclose(source);
-                        // fclose(target);
-                }
-                    if(config->printing_enabled){
-                        shared_memory->logic_state = log_print;
-                    }else{
-                        shared_memory->logic_state = log_idle;
+                    render_design(&config->design,session->jpg_capture);
+                    for(int i = 0; i<config->design.total_photos;i++){
+                        free(session->jpg_capture[i].data);
+                        session->jpg_capture[i].size = 0;
                     }
+                }
+                if(config->printing_enabled){
+                    shared_memory->logic_state = log_print;
+                }else{
+                    shared_memory->logic_state = log_idle;
+                }
                 break;
-
             case log_print:
                 if(init_state){
                     print_file("print_me.png");
@@ -362,72 +235,4 @@ void run_logic(shared_memory_t *shared_memory,photobooth_config_t *config, photo
                 break;
         }
     }
-}
-
-int get_latest_design(char *dir_path,char *design_path)
-{
-    DIR *d;
-    struct dirent *dir;
-    d = opendir(dir_path);
-    if(d)
-    {
-        time_t most_recent = 0;
-        while ((dir = readdir(d)) != NULL)
-        {
-            if(dir->d_type != DT_REG)continue;
-            char path[512]={0};
-            struct stat file_stats = {0};
-            strncpy(path,dir_path,255);
-            strncat(path,"/",2);
-            strncat(path,dir->d_name,255);
-            stat(path,&file_stats);
-            if( strstr(path,".design.svg") && file_stats.st_mtim.tv_sec > most_recent){
-                most_recent = file_stats.st_mtim.tv_sec;
-                strcpy(design_path,path);
-            }          
-        }
-        closedir(d);
-        if(design_path[0]==0){
-            LOG("ERROR: \"%s\" does not contain a design.\n",dir_path);
-            return 1;
-        }
-    }else{
-        LOG("ERROR: \"%s\" is not a valid directory.\n",dir_path);
-        return 1;
-    }
-    return 0;
-}
-
-int get_latest_theme(char *dir_path,char *theme_path)
-{
-    DIR *d;
-    struct dirent *dir;
-    d = opendir(dir_path);
-    if(d)
-    {
-        time_t most_recent = 0;
-        while ((dir = readdir(d)) != NULL)
-        {
-            if(dir->d_type != DT_REG)continue;
-            char path[512]={0};
-            struct stat file_stats = {0};
-            strncpy(path,dir_path,255);
-            strncat(path,"/",2);
-            strncat(path,dir->d_name,255);
-            stat(path,&file_stats);
-            if( strstr(path,".theme.svg") && file_stats.st_mtim.tv_sec > most_recent){
-                most_recent = file_stats.st_mtim.tv_sec;
-                strcpy(theme_path,path);
-            }          
-        }
-        closedir(d);
-        if(theme_path[0]==0){
-            LOG("ERROR: \"%s\" does not contain a theme.\n",dir_path);
-            return 1;
-        }
-    }else{
-        LOG("ERROR: \"%s\" is not a valid directory.\n",dir_path);
-        return 1;
-    }
-    return 0;
 }

@@ -115,9 +115,9 @@ void prepare_photo_list(xmlNode * a_node,photo_element_t *photo_list, int *index
     }
 }
 
-int load_design_from_file(cp_design_t *design, const char *svg_design)
+int load_design_from_file(design_t *design, const char *svg_design)
 {
-    memset(design,0,sizeof(cp_design_t));
+    memset(design,0,sizeof(design_t));
     doc = xmlReadFile(svg_design, NULL, 0);
     if(doc == NULL){
         return 1;
@@ -142,7 +142,7 @@ int load_design_from_file(cp_design_t *design, const char *svg_design)
     return 0;
 }
 
-int render_design(cp_design_t *design, jpg_photo_t *jpg_photo)
+int render_design(design_t *design, jpg_photo_t *jpg_photo)
 {
     // REPLACE IMAGES!!
     xmlNs *xlink_ns = NULL;
@@ -221,7 +221,7 @@ int render_design(cp_design_t *design, jpg_photo_t *jpg_photo)
     return 1;
 }
 
-void free_design(cp_design_t *design)
+void free_design(design_t *design)
 {
     free(design->photo_list);
     xmlFreeDoc(doc);

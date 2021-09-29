@@ -30,10 +30,10 @@ typedef struct{
     unsigned total_photos; // number of unique photos to be made
     unsigned total_locations; // number of locations where photos will be placed
     photo_element_t *photo_list;
-}cp_design_t;
+}design_t;
 
-int load_design_from_file(cp_design_t *design, const char *svg_design);
-int render_design(cp_design_t *design, jpg_photo_t *jpg_photo);
-void free_design(cp_design_t *design);
+int load_design_from_file(design_t *design, const char *svg_design);
+int render_design(design_t *design, jpg_photo_t *jpg_photo);
+void free_design(design_t *design);
 
 #endif

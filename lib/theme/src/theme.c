@@ -51,16 +51,16 @@ void xml_theme_layer_set_visability(xmlNode * layer_node, int make_visable)
 
 int render_theme_layer(theme_t *theme, xmlNode *layer, overlay_t *overlay)
 {
-    // xml_theme_layer_set_visability(cd_3_node, 0);
-    // xml_theme_layer_set_visability(cd_2_node, 0);
-    // xml_theme_layer_set_visability(cd_1_node, 0);
-    // xml_theme_layer_set_visability(push_node, 0);
-    // xml_theme_layer_set_visability(smile_node, 0);
-    // xml_theme_layer_set_visability(fail_node, 0);
-    // xml_theme_layer_set_visability(print_node, 0);
-    // xml_theme_layer_set_visability(bg_transparent_node, 0);
-    // xml_theme_layer_set_visability(bg_opaque_node, 0);
-    // xml_theme_layer_set_visability(fg_overlay_node, 1);
+    xml_theme_layer_set_visability(cd_3_node, 0);
+    xml_theme_layer_set_visability(cd_2_node, 0);
+    xml_theme_layer_set_visability(cd_1_node, 0);
+    xml_theme_layer_set_visability(push_node, 0);
+    xml_theme_layer_set_visability(smile_node, 0);
+    xml_theme_layer_set_visability(fail_node, 0);
+    xml_theme_layer_set_visability(print_node, 0);
+    xml_theme_layer_set_visability(bg_transparent_node, 0);
+    xml_theme_layer_set_visability(bg_opaque_node, 0);
+    xml_theme_layer_set_visability(fg_overlay_node, 1);
 
     xml_theme_layer_set_visability(layer, 1);
     if (layer->type == XML_ELEMENT_NODE) {

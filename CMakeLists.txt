@@ -6,12 +6,6 @@ project(cheesypic   VERSION     1.0
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 
-# add_definitions(-DNO_CAM)
-# add_definitions(-DNO_PRINT)
-# add_definitions(-DNO_SAVE)
-# add_definitions(-DFAST_MODE)
-# add_definitions(-DSTART_WINDOWED)
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 # check if we are building on a raspberry pi 4
@@ -74,8 +68,8 @@ include_directories(.
 message(STATUS "glfw path: ${glfw_SOURCE_DIR}/deps" ...)
 
 # add_subdirectory(app)
-add_subdirectory(lib/cp_design)
-add_subdirectory(lib/cp_theme)
+add_subdirectory(lib/design)
+add_subdirectory(lib/theme)
 add_subdirectory(app)
 
 # # PHOTOBOOTH
