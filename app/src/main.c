@@ -30,6 +30,9 @@ int main(int argc, char *argv[])
     }
     // Init printer data
     printer_info_t printer_info;
+    printer_info.nuf_of_decks = 2;
+    printer_info.deck = malloc(printer_info.nuf_of_decks * sizeof(deck_info_t));
+    memset(printer_info.deck,0,printer_info.nuf_of_decks * sizeof(deck_info_t));
     if(get_printer_driver_name(&config.printer_driver_name)){
         LOG("No default printer...\n");
         exit_code = EXIT_FAILURE; 
@@ -43,7 +46,7 @@ int main(int argc, char *argv[])
     // Init session data
     session_t session;
     memset(&session,0,sizeof(session_t));
-    session.jpg_capture = malloc(sizeof(char *)*config.design.total_photos);
+    session.jpg_capture = malloc(config.design.total_photos * sizeof(jpg_photo_t));
     if(session.jpg_capture == NULL){
         LOG("Error couldn't allocate memory for session\n");
         exit_code = EXIT_FAILURE; 

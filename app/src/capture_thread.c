@@ -14,20 +14,9 @@ static unsigned long readJpg(char *name, char *data){
         LOG("Unable to open file %s", name);
         return 1;
     }
-    
-    //Get file length
     fseek(file, 0, SEEK_END);
     size=ftell(file);
     fseek(file, 0, SEEK_SET);
-    //LOG(" %s has size %ld\n",name,size);
-    //Allocate memory
-    //*data=(char *)malloc(size+1);
-    // if (!*data)
-    // {
-    //     LOG( "Memory error!");
-    //     fclose(file);
-    //     return 1;
-    // }
     fread(data, size, 1, file);
     fclose(file);
     return size;
@@ -81,7 +70,6 @@ void stop_capture_thread(int dummy)
     captureRunning = 0;
     stop_decode_thread();
 }
-
 
 int init_capture_thread(struct pollfd *fds, int *numfd,GPContext **ctx, Camera **camera)
 {
@@ -210,7 +198,6 @@ static void print_fps(void)
         frames = 0;
     }
 }
-
 
 void run_capture_thread(shared_memory_t *shared_memory, struct pollfd *fds, int *numfd, GPContext **ctx, Camera **camera)
 {

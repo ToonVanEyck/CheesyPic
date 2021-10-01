@@ -18,11 +18,11 @@ int xml_node_is_cheesypic_placeholder(xmlNode * a_node)
 {
     int rc = 0;
     if (a_node->type == XML_ELEMENT_NODE) {
-        xmlChar *id = xmlGetProp(a_node,"id");
-        if(id && strstr(id,"cheesypic_placeholder")){
+        xmlChar *is_placeholder = xmlGetProp(a_node,"cheesypic_placeholder");
+        if(is_placeholder){
             rc = 1;
         }
-        xmlFree(id);
+        xmlFree(is_placeholder);
     }
     return rc;
 }

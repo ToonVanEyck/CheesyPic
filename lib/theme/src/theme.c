@@ -175,13 +175,13 @@ int load_theme_from_file(theme_t *theme, const char *svg_theme)
     if(!bg_opaque_node){      LOG("No bg_opaque layer found in %s\n",svg_theme); return 1;}
     if(!fg_overlay_node){     LOG("No fg_overlay layer found in %s\n",svg_theme); return 1;}
     
-    if(render_theme_layer(theme,cd_3_node, &theme->cd_3 )){  LOG("Couldn't render theme->cd_3 \n"); return 1;}
-    if(render_theme_layer(theme,cd_2_node, &theme->cd_2 )){  LOG("Couldn't render theme->cd_2 \n"); return 1;}
-    if(render_theme_layer(theme,cd_1_node, &theme->cd_1 )){  LOG("Couldn't render theme->cd_1 \n"); return 1;}
-    if(render_theme_layer(theme,push_node, &theme->push )){  LOG("Couldn't render theme->push \n"); return 1;}
-    if(render_theme_layer(theme,smile_node,&theme->smile )){ LOG("Couldn't render theme->smile\n"); return 1;}
-    if(render_theme_layer(theme,fail_node, &theme->fail )){  LOG("Couldn't render theme->fail \n"); return 1;}
-    if(render_theme_layer(theme,print_node,&theme->print )){ LOG("Couldn't render theme->print\n"); return 1;}
+    if(render_theme_layer(theme,cd_3_node, &theme->cd_3 )){ LOG("Couldn't render theme->cd_3 \n"); return 1;}
+    if(render_theme_layer(theme,cd_2_node, &theme->cd_2 )){ LOG("Couldn't render theme->cd_2 \n"); return 1;}
+    if(render_theme_layer(theme,cd_1_node, &theme->cd_1 )){ LOG("Couldn't render theme->cd_1 \n"); return 1;}
+    if(render_theme_layer(theme,push_node, &theme->push )){ LOG("Couldn't render theme->push \n"); return 1;}
+    if(render_theme_layer(theme,smile_node,&theme->smile)){ LOG("Couldn't render theme->smile\n"); return 1;}
+    if(render_theme_layer(theme,fail_node, &theme->fail )){ LOG("Couldn't render theme->fail \n"); return 1;}
+    if(render_theme_layer(theme,print_node,&theme->print)){ LOG("Couldn't render theme->print\n"); return 1;}
 
     xmlFreeDoc(doc);
     xmlCleanupParser();
