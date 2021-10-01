@@ -75,6 +75,7 @@ int read_config(config_t *config)
     config->preview_time.it_value.tv_usec = (preview_time - config->preview_time.it_value.tv_sec ) * 1000000L;
     config->mirror_liveview = g_key_file_get_boolean(keyfile,"advanced","mirror_liveview",NULL);
     config->mirror_preview = g_key_file_get_boolean(keyfile,"advanced","mirror_preview",NULL);
+    config->printing_enabled = !g_key_file_get_boolean(keyfile,"advanced","disable_printing",NULL);
 
     g_key_file_free (keyfile);
 

@@ -61,6 +61,7 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
     static int prev_is_active = 2;
     if(prev_is_active != shared_memory->photobooth_active){
         prev_is_active = shared_memory->photobooth_active;
+        init_state = (shared_memory->photobooth_active == 1);
         LOG("logic active:   [%s]\n",shared_memory->photobooth_active?"YES":"NO");
     }
 
@@ -107,7 +108,8 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
             case log_capture:       set_image_overlay(&shared_memory->overlay_buffer,&config->theme.smile);  break;
             case log_capture_failed:set_image_overlay(&shared_memory->overlay_buffer,&config->theme.fail);   break;
             case log_reveal:                                                                                 break; //the captured image is shown instead of the overlay
-            case log_procces:       set_image_overlay(&shared_memory->overlay_buffer,&config->theme.print);  break;
+            case log_procces:                                                                                break;
+            case log_print:         set_image_overlay(&shared_memory->overlay_buffer,&config->theme.print);  break;
             default:                                                                                         break;
         }
         sem_post(&shared_memory->sem_render);
@@ -175,8 +177,8 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                 break;
             case log_decode:
                 if(init_state){
-                    LOG("captured %d/%d photos.\n",session->photo_counter+1,config->design.total_photos);
                     session->photo_counter++;
+                    LOG("captured %d/%d photos.\n",session->photo_counter,config->design.total_photos);
                 }
                 // handled in decode thread
                 break;
@@ -197,8 +199,6 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                     if(config->save_photos){
                         writeJpg(capture_path,(const char *)shared_memory->capture_buffer.jpeg_buffer,shared_memory->capture_buffer.size);
                     }
-                    printf("%d\n",session->photo_counter-1);
-                    printf("%ld\n",shared_memory->capture_buffer.size);
                     session->jpg_capture[session->photo_counter-1].size = shared_memory->capture_buffer.size;
                     session->jpg_capture[session->photo_counter-1].data = malloc(session->jpg_capture[session->photo_counter-1].size);
                     memcpy(session->jpg_capture[session->photo_counter-1].data,shared_memory->capture_buffer.jpeg_buffer,session->jpg_capture[session->photo_counter-1].size);
