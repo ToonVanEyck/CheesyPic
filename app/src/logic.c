@@ -126,11 +126,7 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                 break;
             case log_triggred:
                 if(init_state){
-                    if(session->photo_counter < config->design.total_photos){
-                        shared_memory->logic_state = log_countdown_3;
-                    }else{
-                         shared_memory->logic_state = log_procces;
-                    }
+                    shared_memory->logic_state = log_countdown_3;
                 }
                 break;
             case log_countdown_3:
@@ -171,7 +167,7 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                     setitimer(ITIMER_REAL,shared_memory->fastmode?&fast_time:&config->countdown_time,NULL);
                 }
                 if(alarm_var){
-                    shared_memory->logic_state = log_countdown_3;
+                    shared_memory->logic_state = log_triggred;
                     alarm_var = 0;
                 }
                 break;
@@ -204,9 +200,14 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                     memcpy(session->jpg_capture[session->photo_counter-1].data,shared_memory->capture_buffer.jpeg_buffer,session->jpg_capture[session->photo_counter-1].size);
                     shared_memory->capture_buffer.jpeg_copied = 1;
                 }
-                if(alarm_var && shared_memory->capture_buffer.jpeg_copied == 0){
-                    shared_memory->logic_state = log_triggred;
-                    alarm_var = 0;
+
+                if(shared_memory->capture_buffer.jpeg_copied == 0){
+                    if(session->photo_counter == config->design.total_photos){
+                        shared_memory->logic_state = log_procces;
+                    }else if(alarm_var){
+                        shared_memory->logic_state = log_triggred;
+                        alarm_var = 0;
+                    }
                 }
                 break;
 
@@ -218,10 +219,13 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                         session->jpg_capture[i].size = 0;
                     }
                 }
-                if(config->printing_enabled){
-                    shared_memory->logic_state = log_print;
-                }else{
-                    shared_memory->logic_state = log_idle;
+                if(alarm_var){
+                    if(config->printing_enabled){
+                        shared_memory->logic_state = log_print;
+                    }else{
+                        shared_memory->logic_state = log_idle;
+                    }
+                    alarm_var = 0;
                 }
                 break;
             case log_print:

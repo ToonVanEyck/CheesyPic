@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include <glib-object.h>
 #include <librsvg-2.0/librsvg/rsvg.h>

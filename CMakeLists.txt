@@ -9,14 +9,13 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 # check if we are building on a raspberry pi 4
-execute_process(COMMAND         grep -o "Raspberry Pi 4" /proc/cpuinfo
-                OUTPUT_VARIABLE IS_PI4)
+# execute_process(COMMAND grep -o "Raspberry Pi 4" /proc/cpuinfo OUTPUT_VARIABLE IS_PI4)
 
-if(DEFINED IS_PI4)
-    message(STATUS "PI")
-else()
-    message(STATUS "NOT PI")
-endif()
+# if(DEFINED IS_PI4)
+#     message(STATUS "PI")
+# else()
+#     message(STATUS "NOT PI")
+# endif()
 
 include(FetchContent)
 FetchContent_Declare(

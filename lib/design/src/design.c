@@ -3,6 +3,8 @@
 static xmlNode *root; 
 static xmlDoc *doc;
 
+static struct timeval start, encoded, rendered;
+
 xmlNode *xml_child_node_by_name(xmlNode * a_node, const char *name)
 {
     xmlNode *cur_node = NULL;
@@ -164,7 +166,6 @@ int render_design(design_t *design, jpg_photo_t *jpg_photo)
             free(encoded_jpg);
         }
     }
-
     xmlBuffer *buffer = xmlBufferCreate();
     xmlNodeDump(buffer,doc,root,0,0);
     RsvgHandle *handle = NULL;
