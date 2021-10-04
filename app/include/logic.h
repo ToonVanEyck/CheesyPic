@@ -17,6 +17,8 @@
 #define LOG(...) do{fprintf(stderr,"logic: ");fprintf(stderr, __VA_ARGS__);}while(0)
 #endif
 
+#include <pthread.h>
+
 #include "shared_memory.h"
 #include "design.h"
 #include "theme.h"

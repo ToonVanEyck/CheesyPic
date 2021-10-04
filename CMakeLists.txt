@@ -33,6 +33,8 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 # add_subdirectory(${glfw_SOURCE_DIR})
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 find_package(OpenGL REQUIRED)
 find_package(Gphoto2 REQUIRED)

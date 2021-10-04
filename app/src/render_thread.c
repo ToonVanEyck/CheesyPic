@@ -326,7 +326,7 @@ void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLui
         mirror_preview[0][0] = (shared_memory->mirror_liveview==1)?(-1):(1);
 
         if(sem_timedwait(&shared_memory->sem_render,&sem_timespec) == 0){
-            if(shared_memory->logic_state != log_reveal  || !shared_memory->photobooth_active){
+            if((shared_memory->logic_state != log_reveal && shared_memory->logic_state != log_procces) || !shared_memory->photobooth_active){
                 //  -------- PREVIEW LOGIC --------
                 for(int i = 0;i<NUM_JPEG_BUFFERS;i++){
                     if(shared_memory->preview_buffer[i].pre_state == pre_render){

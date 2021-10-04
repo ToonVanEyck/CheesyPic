@@ -20,6 +20,19 @@ static unsigned long writeJpg(char *name, const char *data, unsigned long size){
     return size;
 }
 
+pthread_t photostrip_render_thread;
+void *photostrip_render(void* data) {
+    LOG("started rendering the design\n");
+    design_t *design = (design_t *)((void **)data)[0]; 
+    session_t *session = (session_t *)((void **)data)[1]; 
+    render_design(design,session->jpg_capture);
+    for(int i = 0; i<design->total_photos;i++){
+        free(session->jpg_capture[i].data);
+        session->jpg_capture[i].size = 0;
+    }
+    return NULL;
+}
+
 char* get_state_name(logic_state_t i)
 {
     static char *names[] = {
@@ -199,15 +212,20 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                     session->jpg_capture[session->photo_counter-1].data = malloc(session->jpg_capture[session->photo_counter-1].size);
                     memcpy(session->jpg_capture[session->photo_counter-1].data,shared_memory->capture_buffer.jpeg_buffer,session->jpg_capture[session->photo_counter-1].size);
                     shared_memory->capture_buffer.jpeg_copied = 1;
-                }
-
-                if(shared_memory->capture_buffer.jpeg_copied == 0){
-                    if(session->photo_counter == config->design.total_photos){
-                        shared_memory->logic_state = log_procces;
-                    }else if(alarm_var){
-                        shared_memory->logic_state = log_triggred;
-                        alarm_var = 0;
+                    if(session->photo_counter == config->design.total_photos && config->printing_enabled){
+                        void *data[2] = {&config->design,session};
+                        pthread_create(&photostrip_render_thread, NULL,photostrip_render,data);
                     }
+                }
+                if(alarm_var && shared_memory->capture_buffer.jpeg_copied == 0){
+                    if(session->photo_counter != config->design.total_photos){
+                        shared_memory->logic_state = log_triggred;
+                    }else if(config->printing_enabled){
+                        shared_memory->logic_state = log_print;
+                    }else{
+                        shared_memory->logic_state = log_idle;
+                    }
+                    alarm_var = 0;
                 }
                 break;
 
@@ -230,6 +248,8 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                 break;
             case log_print:
                 if(init_state){
+                    void *retval;
+                    pthread_join(photostrip_render_thread,&retval);
                     print_file("print_me.png");
                 }
                 if(is_printing_finished(config->printer_driver_name,printer_info)) shared_memory->logic_state = log_idle;

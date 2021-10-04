@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     }
     // Init session data
     session_t session;
-    memset(&session,0,sizeof(session_t));
+    memset(&session,0,sizeof(session));
     session.jpg_capture = malloc(config.design.total_photos * sizeof(jpg_photo_t));
     if(session.jpg_capture == NULL){
         LOG("Error couldn't allocate memory for session\n");

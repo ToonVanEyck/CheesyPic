@@ -1,8 +1,8 @@
 file(GLOB app_src src/*.c )
 
-add_definitions(-DNO_CAM)
+# add_definitions(-DNO_CAM)
 # add_definitions(-DFAST_MODE)
-add_definitions(-DSTART_WINDOWED)
+# add_definitions(-DSTART_WINDOWED)
 
 add_executable(cheesypic  ${app_src})
 target_link_libraries(cheesypic glfw)
@@ -10,6 +10,7 @@ target_link_libraries(cheesypic OpenGL::GL)
 target_link_libraries(cheesypic ${Gphoto2_LIBRARIES})
 target_link_libraries(cheesypic ${TurboJPEG_LIBRARIES})
 target_link_libraries(cheesypic ${JSONC_LIBRARY} )
+target_link_libraries(cheesypic Threads::Threads)
 target_link_libraries(cheesypic design)
 target_link_libraries(cheesypic theme)
 
