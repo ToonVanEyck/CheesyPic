@@ -28,6 +28,10 @@ int main(int argc, char *argv[])
         exit_code = EXIT_FAILURE; 
         goto cleanup;
     }
+    // setup shared memory data
+    shared_memory->mirror_liveview = config.mirror_liveview;
+    shared_memory->mirror_preview = config.mirror_preview;
+
     // Init printer data
     printer_info_t printer_info;
     printer_info.nuf_of_decks = 2;
