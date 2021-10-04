@@ -1,6 +1,7 @@
 #include "logic.h"
 
 static int alarm_var;
+static void *thread_data[2] = {NULL,NULL};
 
 void alarm_capture(int dummy)
 {
@@ -212,20 +213,25 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                     session->jpg_capture[session->photo_counter-1].data = malloc(session->jpg_capture[session->photo_counter-1].size);
                     memcpy(session->jpg_capture[session->photo_counter-1].data,shared_memory->capture_buffer.jpeg_buffer,session->jpg_capture[session->photo_counter-1].size);
                     shared_memory->capture_buffer.jpeg_copied = 1;
-                    if(session->photo_counter == config->design.total_photos && config->printing_enabled){
-                        void *data[2] = {&config->design,session->jpg_capture};
-                        pthread_create(&photostrip_render_thread, NULL,photostrip_render,data);
-                    }
+                    photostrip_render_thread = 0;
+                    
                 }
-                if(alarm_var && shared_memory->capture_buffer.jpeg_copied == 0){
-                    if(session->photo_counter != config->design.total_photos){
-                        shared_memory->logic_state = log_triggred;
-                    }else if(config->printing_enabled){
-                        shared_memory->logic_state = log_print;
-                    }else{
-                        shared_memory->logic_state = log_idle;
+                if(shared_memory->capture_buffer.jpeg_copied == 0){
+                    if(photostrip_render_thread == 0 && session->photo_counter == config->design.total_photos && config->printing_enabled){
+                            thread_data[0] = &config->design;
+                            thread_data[1] = session->jpg_capture;
+                            pthread_create(&photostrip_render_thread, NULL,photostrip_render,thread_data);
+                        }
+                    if(alarm_var /*&& shared_memory->capture_buffer.jpeg_copied == 0*/){
+                        if(session->photo_counter != config->design.total_photos){
+                            shared_memory->logic_state = log_triggred;
+                        }else if(config->printing_enabled){
+                            shared_memory->logic_state = log_print;
+                        }else{
+                            shared_memory->logic_state = log_idle;
+                        }
+                        alarm_var = 0;
                     }
-                    alarm_var = 0;
                 }
                 break;
 
