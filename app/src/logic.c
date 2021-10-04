@@ -24,11 +24,11 @@ pthread_t photostrip_render_thread;
 void *photostrip_render(void* data) {
     LOG("started rendering the design\n");
     design_t *design = (design_t *)((void **)data)[0]; 
-    session_t *session = (session_t *)((void **)data)[1]; 
-    render_design(design,session->jpg_capture);
+    jpg_photo_t *jpg_capture = (jpg_photo_t *)((void **)data)[1]; 
+    render_design(design,jpg_capture);
     for(int i = 0; i<design->total_photos;i++){
-        free(session->jpg_capture[i].data);
-        session->jpg_capture[i].size = 0;
+        free(jpg_capture[i].data);
+        jpg_capture[i].size = 0;
     }
     return NULL;
 }
@@ -213,7 +213,7 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                     memcpy(session->jpg_capture[session->photo_counter-1].data,shared_memory->capture_buffer.jpeg_buffer,session->jpg_capture[session->photo_counter-1].size);
                     shared_memory->capture_buffer.jpeg_copied = 1;
                     if(session->photo_counter == config->design.total_photos && config->printing_enabled){
-                        void *data[2] = {&config->design,session};
+                        void *data[2] = {&config->design,session->jpg_capture};
                         pthread_create(&photostrip_render_thread, NULL,photostrip_render,data);
                     }
                 }

@@ -2,7 +2,7 @@ file(GLOB app_src src/*.c )
 
 # add_definitions(-DNO_CAM)
 # add_definitions(-DFAST_MODE)
-# add_definitions(-DSTART_WINDOWED)
+add_definitions(-DSTART_WINDOWED)
 
 add_executable(cheesypic  ${app_src})
 target_link_libraries(cheesypic glfw)
