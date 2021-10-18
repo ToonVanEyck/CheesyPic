@@ -203,7 +203,7 @@ if __name__=='__main__':
     while pid:
         time.sleep(1)
         current = ina219.getCurrent_mA()
-        if(current < 0):
+        if(current < -450):
             shutdown_counter += 1
             if(shutdown_counter > 3):
                 try:

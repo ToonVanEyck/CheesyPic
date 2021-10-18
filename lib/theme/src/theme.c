@@ -190,11 +190,11 @@ int load_theme_from_file(theme_t *theme, const char *svg_theme)
 
 void free_theme(theme_t *theme)
 {
-    free(theme->cd_3.data);
-    free(theme->cd_2.data);
-    free(theme->cd_1.data);
-    free(theme->push.data);
-    free(theme->smile.data);
-    free(theme->fail.data);
-    free(theme->print.data);
+    if(theme->cd_3.data != NULL)  free(theme->cd_3.data);
+    if(theme->cd_2.data != NULL)  free(theme->cd_2.data);
+    if(theme->cd_1.data != NULL)  free(theme->cd_1.data);
+    if(theme->push.data != NULL)  free(theme->push.data);
+    if(theme->smile.data != NULL) free(theme->smile.data);
+    if(theme->fail.data != NULL)  free(theme->fail.data);
+    if(theme->print.data != NULL) free(theme->print.data);
 }

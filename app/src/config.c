@@ -24,7 +24,9 @@ int read_config(config_t *config)
         }else{
             asprintf(&design_path,"%s%s",p.we_wordv[0],design_file);
         }
-        load_design_from_file(&config->design,design_path);
+        if(load_design_from_file(&config->design,design_path)){
+            return 1;
+        }
         free(design_path);
     }
     wordfree(&p);
@@ -42,7 +44,9 @@ int read_config(config_t *config)
         }else{
             asprintf(&theme_path,"%s%s",p.we_wordv[0],theme_file);
         }
-        load_theme_from_file(&config->theme,theme_path);
+        if(load_theme_from_file(&config->theme,theme_path)){
+            return 1;
+        }
         free(theme_path);
     }
     wordfree(&p);
@@ -93,9 +97,9 @@ int read_config(config_t *config)
 }
 
 void free_config(config_t *config){
-    free(config->printer_driver_name);
-    free(config->save_path_and_prefix);
-    free(config->ups_addon_path);
+    if(config->printer_driver_name != NULL)   free(config->printer_driver_name);
+    if(config->save_path_and_prefix != NULL)  free(config->save_path_and_prefix);
+    if(config->ups_addon_path != NULL)        free(config->ups_addon_path);
     free_design(&config->design);
     free_theme(&config->theme);
 }

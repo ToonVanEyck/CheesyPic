@@ -132,6 +132,10 @@ int load_design_from_file(design_t *design, const char *svg_design)
     design->total_locations = cnt_locations(root);
     cnt_photos(root,&design->total_photos);
     LOG("%d unique photos spread over %d locations\n",design->total_photos,design->total_locations);
+    if(!design->total_photos || !design->total_locations){
+        LOG("no photo loocations detected in design\n");
+        return 1;
+    }
 
     design->photo_list = malloc(design->total_locations*sizeof(photo_element_t));
     if(design->photo_list == NULL){
@@ -224,7 +228,7 @@ int render_design(design_t *design, jpg_photo_t *jpg_photo)
 
 void free_design(design_t *design)
 {
-    free(design->photo_list);
+    if(design->photo_list != NULL) free(design->photo_list);
     xmlFreeDoc(doc);
     xmlCleanupParser();
 }

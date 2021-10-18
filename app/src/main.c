@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     if(read_config(&config)){
         LOG("Failed to parse config file!\n");
         exit_code = EXIT_FAILURE; 
-        goto cleanup;
+        goto cleanup_config;
     }
     // Setup shared memory data
     shared_memory->mirror_liveview = config.mirror_liveview;
@@ -46,8 +46,6 @@ int main(int argc, char *argv[])
                 exit(EXIT_FAILURE);
             }
     }
-
-
     // Init printer data
     printer_info_t printer_info;
     printer_info.nuf_of_decks = 2;
@@ -56,7 +54,7 @@ int main(int argc, char *argv[])
     if(get_printer_driver_name(&config.printer_driver_name)){
         LOG("No default printer...\n");
         exit_code = EXIT_FAILURE; 
-        goto cleanup;
+        goto cleanup_printer;
     }
     is_printing_finished(config.printer_driver_name,&printer_info);
     if(!printer_info.connected){
@@ -70,7 +68,7 @@ int main(int argc, char *argv[])
     if(session.jpg_capture == NULL){
         LOG("Error couldn't allocate memory for session\n");
         exit_code = EXIT_FAILURE; 
-        goto cleanup;
+        goto cleanup_session;
     }
     init_logic();
     // start threads
@@ -117,14 +115,17 @@ int main(int argc, char *argv[])
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
     }
-cleanup:
+cleanup_session:
+    if(session.jpg_capture != NULL) free(session.jpg_capture);
+cleanup_printer:
+    if(printer_info.deck != NULL) free(printer_info.deck);
+cleanup_config:
+    free_config(&config);
+cleanup_sems:
     //destroy semaphores
     sem_destroy(&shared_memory->sem_decode);
     sem_destroy(&shared_memory->sem_render);
     sem_destroy(&shared_memory->sem_logic);
-
-    free_config(&config);
-    free(printer_info.deck);
 
     if(shared_memory->exit_slow)sleep(20);
     exit(exit_code);
