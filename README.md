@@ -89,7 +89,7 @@ The photobooth uses the 'c' key as a trigger to start the photobooth. A device-t
 
 Compile and install the *photobooth_button.dts* on the pi using:
 ```bash
-sudo dtc -I dts -O dtb -o /boot/overlays/photobooth_button.dtbo photobooth_button.dts
+sudo dtc -I dts -O dtb -o /boot/overlays/photobooth_button.dtbo misc/photobooth_button.dts
 ```
 Connect a normaly open button between GPIO_1 and ground.
 
