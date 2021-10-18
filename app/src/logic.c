@@ -8,6 +8,12 @@ void alarm_capture(int dummy)
     alarm_var = 1;
 }
 
+static int logicRunning = 1;
+void stop_logic_thread(int dummy)
+{
+    logicRunning = 0;
+}
+
 static unsigned long writeJpg(char *name, const char *data, unsigned long size){
     FILE *file;
     file = fopen(name, "wb+");
@@ -57,6 +63,7 @@ char* get_state_name(logic_state_t i)
 void init_logic()
 {
     signal(SIGALRM, alarm_capture);
+    signal(SIGINT, stop_logic_thread);
     alarm_var = 0;
 }
 
@@ -67,7 +74,7 @@ void set_image_overlay(overlay_buffer_t *dest, overlay_t *src)
     memcpy(&dest->raw_data,src->data,src->width*src->height*4);
 }
 
-void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *session, printer_info_t *printer_info)
+int run_logic(shared_memory_t *shared_memory,config_t *config, session_t *session, printer_info_t *printer_info)
 {
     static logic_state_t prev_logic_state = -1;
     int init_state = (prev_logic_state != shared_memory->logic_state);
@@ -265,4 +272,5 @@ void run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessi
                 break;
         }
     }
+    return logicRunning;
 }

@@ -5,7 +5,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *mirror_liveview_mat ,GLuint *mirror_preview_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
+int init_render_thread(GLFWwindow **window, int windowless_mode, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *mirror_liveview_mat ,GLuint *mirror_preview_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
 void cleanup_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program,GLuint *resize_mat, GLuint *mirror_liveview_mat ,GLuint *mirror_preview_mat, GLuint *fragment_shader,GLuint *vertex_shader, GLuint *ebo, GLuint *vbo);
 void run_render_thread(shared_memory_t *shared_memory, GLFWwindow **window, GLuint program, GLuint resize_mat ,GLuint mirror_liveview_mat ,GLuint mirror_preview_mat);
 
@@ -122,7 +122,7 @@ void start_render_thread(shared_memory_t *shared_memory)
     GLuint textures[NUM_TEXTURES];
     GLuint program, resize_mat, mirror_liveview_mat, mirror_preview_mat, fragment_shader, vertex_shader, ebo, vbo;
     GLFWwindow* window;
-    init_render_thread(&window, textures, &program, &resize_mat, &mirror_liveview_mat, &mirror_preview_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
+    init_render_thread(&window, shared_memory->windowless_mode, textures, &program, &resize_mat, &mirror_liveview_mat, &mirror_preview_mat, &fragment_shader, &vertex_shader, &ebo, &vbo);
 
     printf("OpenGL info:\n"
 	       "\tVendor   = \"%s\"\n"
@@ -147,7 +147,7 @@ GLFWmonitor* primaryMonitor;
 struct windowParams{int xpos; int ypos; int width; int height;};
 struct windowParams windowParams;
 
-int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, GLuint *resize_mat, GLuint *mirror_liveview_mat, GLuint *mirror_preview_mat, GLuint *fragment_shader, GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
+int init_render_thread(GLFWwindow **window, int windowless_mode, GLuint *textures, GLuint *program, GLuint *resize_mat, GLuint *mirror_liveview_mat, GLuint *mirror_preview_mat, GLuint *fragment_shader, GLuint *vertex_shader, GLuint *ebo, GLuint *vbo)
 {
     GLint vpos_location, vcol_location;
 
@@ -163,7 +163,7 @@ int init_render_thread(GLFWwindow **window, GLuint *textures, GLuint *program, G
 
 
     primaryMonitor = glfwGetPrimaryMonitor();
-    *window = glfwCreateWindow(600, 400, "CheesyPic Photobooth by ToonVanEyck", WINDOW?NULL:primaryMonitor, NULL);
+    *window = glfwCreateWindow(600, 400, "CheesyPic Photobooth by ToonVanEyck", windowless_mode?primaryMonitor:NULL, NULL);
     if (!*window)
     {
         glfwTerminate();

@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     // setup shared memory data
     shared_memory->mirror_liveview = config.mirror_liveview;
     shared_memory->mirror_preview = config.mirror_preview;
+    shared_memory->windowless_mode = config.windowless_mode;
 
     // Init printer data
     printer_info_t printer_info;
@@ -72,17 +73,21 @@ int main(int argc, char *argv[])
     }
     // run logic and wait for threads / processes to finish
     int status = 0;
-    int c = 0;
+    // int c = 0;
     
+    int logic_running = 1;
     const struct timespec sem_timespec = {0,250000};
-    while(capture_pid && render_pid){
+    while(logic_running && capture_pid && render_pid){
         sem_timedwait(&shared_memory->sem_logic,&sem_timespec);
         // check if a proccess has died.
         pid_t pid = waitpid(-1,&status,WNOHANG);
+        if(pid == getpid()){
+            LOG("This thread got a signal\n");
+        }
         if(pid == capture_pid) capture_pid = 0; 
         if(pid == render_pid) render_pid = 0; 
         // execute photobooth logic
-        run_logic(shared_memory,&config, &session, &printer_info);
+        logic_running = run_logic(shared_memory,&config, &session, &printer_info);
     }
     //cleanup code
     sleep(1);

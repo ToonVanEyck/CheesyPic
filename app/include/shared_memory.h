@@ -70,6 +70,7 @@ typedef struct{
     unsigned char mirror_liveview;
     unsigned char mirror_preview;
     unsigned char toggle_printer;
+    unsigned char windowless_mode;
     unsigned char exit_slow;
     int camera_error;
     sem_t sem_decode;

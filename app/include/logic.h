@@ -32,7 +32,7 @@ typedef struct {
 
 
 void init_logic();
-void run_logic(shared_memory_t *shared_memory, config_t *config, session_t *session, printer_info_t *printer_info);
-
+int run_logic(shared_memory_t *shared_memory, config_t *config, session_t *session, printer_info_t *printer_info);
+void stop_logic_thread(int dummy);
 
 #endif
