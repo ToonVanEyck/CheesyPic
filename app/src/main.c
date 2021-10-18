@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "logic.h"
 #include "render_thread.h"
 #include "decode_thread.h"
@@ -28,10 +30,23 @@ int main(int argc, char *argv[])
         exit_code = EXIT_FAILURE; 
         goto cleanup;
     }
-    // setup shared memory data
+    // Setup shared memory data
     shared_memory->mirror_liveview = config.mirror_liveview;
     shared_memory->mirror_preview = config.mirror_preview;
     shared_memory->windowless_mode = config.windowless_mode;
+    // Start addons
+    if(config.ups_addon_path != NULL){
+        LOG("Starting UPS addon: %s\n",config.ups_addon_path);
+            pid_t ups_addon_pid = fork();
+            if(!ups_addon_pid){
+                char* pid_str;
+                asprintf(&pid_str,"%d",getppid());
+                char *args[] = {config.ups_addon_path,pid_str,NULL};
+                execv(args[0],args);
+                exit(EXIT_FAILURE);
+            }
+    }
+
 
     // Init printer data
     printer_info_t printer_info;

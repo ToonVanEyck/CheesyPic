@@ -35,6 +35,7 @@ typedef struct{
     unsigned char save_photos;
     theme_t theme;
     design_t design;
+    char *ups_addon_path;
 }config_t;
 
 int read_config(config_t *config);

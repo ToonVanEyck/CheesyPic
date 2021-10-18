@@ -13,7 +13,7 @@ int read_config(config_t *config)
     }
     wordexp_t p;
 
-    //Select Design
+    ///// [design] /////
     char *design_dir = g_key_file_get_string(keyfile,"design","design_directory",NULL);
     char *design_file = g_key_file_get_string(keyfile,"design","default_design",NULL);
     int use_latest_design = g_key_file_get_boolean(keyfile,"design","use_latest_design",&error);
@@ -28,8 +28,10 @@ int read_config(config_t *config)
         free(design_path);
     }
     wordfree(&p);
+    free(design_dir);
+    free(design_file);
 
-    //Select Theme
+    ///// [theme] /////
     char *theme_dir = g_key_file_get_string(keyfile,"theme","theme_directory",NULL);
     char *theme_file = g_key_file_get_string(keyfile,"theme","default_theme",NULL);
     int use_latest_theme = g_key_file_get_boolean(keyfile,"theme","use_latest_theme",&error);
@@ -44,8 +46,11 @@ int read_config(config_t *config)
         free(theme_path);
     }
     wordfree(&p);
+    free(theme_dir);
+    free(theme_file);
 
-    //Select Theme
+    ///// [save] /////
+    config->save_photos = g_key_file_get_boolean(keyfile,"save","save_photos",NULL);
     char *save_dir = g_key_file_get_string(keyfile,"save","save_directory",NULL);
      if(save_dir && wordexp(save_dir, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
         char *save_dir_with_theme;
@@ -58,15 +63,17 @@ int read_config(config_t *config)
         free(save_dir_with_theme);
     }
     wordfree(&p);
-
-    free(design_dir);
-    free(design_file);
-    free(theme_dir);
-    free(theme_file);
     free(save_dir);
 
-    config->save_photos = g_key_file_get_boolean(keyfile,"capture","save_photos",NULL);
+    ///// [addons] /////
+    char *ups_addon_path = g_key_file_get_string(keyfile,"addons","ups_addon_path",NULL);
+    if(ups_addon_path && wordexp(ups_addon_path, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
+        asprintf(&config->ups_addon_path,"%s",p.we_wordv[0]);
+    }
+    wordfree(&p);
+    free(ups_addon_path);
 
+    ///// [advanced] /////
     double countdown_time = g_key_file_get_double(keyfile,"advanced","countdown_time",&error) + 0.5e-9;
     config->countdown_time.it_value.tv_sec = (long) countdown_time;
     config->countdown_time.it_value.tv_usec = (countdown_time - config->countdown_time.it_value.tv_sec ) * 1000000L;
@@ -88,6 +95,7 @@ int read_config(config_t *config)
 void free_config(config_t *config){
     free(config->printer_driver_name);
     free(config->save_path_and_prefix);
+    free(config->ups_addon_path);
     free_design(&config->design);
     free_theme(&config->theme);
 }

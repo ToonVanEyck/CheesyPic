@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#! /usr/bin/env python3
 import smbus
 import time
 import sys
@@ -201,14 +201,14 @@ if __name__=='__main__':
     shutdown_counter = 0
     pid = int(sys.argv[1]) if len(sys.argv) == 2 else 0
     while pid:
-        time.sleep(2)
+        time.sleep(1)
         current = ina219.getCurrent_mA()
         if(current < 0):
             shutdown_counter += 1
             if(shutdown_counter > 3):
                 try:
                     os.kill(pid,signal.SIGINT)
-                    time.sleep(10)
+                    time.sleep(6)
                 except:
                     pass
                 os.system("sudo shutdown -h now")
