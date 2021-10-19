@@ -134,11 +134,26 @@ setxkbmap -option terminate:ctrl_alt_bksp
 cheesypic
 ```
 ### Start X on boot
-eddit ```.bash_profile```:
+edit ```.bash_profile```:
 ```bash
 [[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && startx -- -nocursor
 ```
-
+### Hide the boot terminal
+edit ```/boot/cmdline.txt``` and add:
+```bash
+consoleblank=1 vt.global_cursor_default=0
+```
+### Hide the boot rainbow splash
+edit ```/boot/config.txt``` and add:
+```bash
+disable_splash=1
+```
+## Reducing boot time
+edit ```/boot/config.txt``` and add:
+```bash
+dtoverlay=pi3-disable-bt
+boot_delay=0
+```
 
 ## Usage / Dev commands
 
