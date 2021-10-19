@@ -15,58 +15,73 @@ int read_config(config_t *config)
 
     ///// [design] /////
     char *design_dir = g_key_file_get_string(keyfile,"design","design_directory",NULL);
-    char *design_file = g_key_file_get_string(keyfile,"design","default_design",NULL);
+    char *design_file;
     int use_latest_design = g_key_file_get_boolean(keyfile,"design","use_latest_design",&error);
-    if(design_dir && design_file && wordexp(design_dir, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
+    if(design_dir && wordexp(design_dir, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
         char *design_path;
         if(use_latest_design){
-            get_recent_file_in_dir(&design_path,p.we_wordv[0],".design.svg");
+            get_recent_file_in_dir(&design_file,p.we_wordv[0],".design.svg");
         }else{
-            asprintf(&design_path,"%s%s",p.we_wordv[0],design_file);
+            design_file = g_key_file_get_string(keyfile,"design","default_design",NULL);
         }
+        if(design_file == NULL)
+        {
+            return 1;
+        }
+        asprintf(&design_path,"%s%s",p.we_wordv[0],design_file);
         if(load_design_from_file(&config->design,design_path)){
             return 1;
         }
         free(design_path);
     }
     wordfree(&p);
-    free(design_dir);
-    free(design_file);
+
 
     ///// [theme] /////
     char *theme_dir = g_key_file_get_string(keyfile,"theme","theme_directory",NULL);
-    char *theme_file = g_key_file_get_string(keyfile,"theme","default_theme",NULL);
+    char *theme_file;
     int use_latest_theme = g_key_file_get_boolean(keyfile,"theme","use_latest_theme",&error);
     if(theme_dir && theme_file && wordexp(theme_dir, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
         char *theme_path;
         if(use_latest_theme){
-            get_recent_file_in_dir(&theme_path,p.we_wordv[0],".theme.svg");
+            get_recent_file_in_dir(&theme_file,p.we_wordv[0],".theme.svg");
         }else{
-            asprintf(&theme_path,"%s%s",p.we_wordv[0],theme_file);
+            theme_file = g_key_file_get_string(keyfile,"theme","default_theme",NULL);
         }
+        if(theme_file == NULL)
+        {
+            return 1;
+        }
+        asprintf(&theme_path,"%s%s",p.we_wordv[0],theme_file);
         if(load_theme_from_file(&config->theme,theme_path)){
             return 1;
         }
         free(theme_path);
     }
     wordfree(&p);
-    free(theme_dir);
-    free(theme_file);
+
 
     ///// [save] /////
     config->save_photos = g_key_file_get_boolean(keyfile,"save","save_photos",NULL);
     char *save_dir = g_key_file_get_string(keyfile,"save","save_directory",NULL);
      if(save_dir && wordexp(save_dir, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
-        char *save_dir_with_theme;
+        char *save_dir_with_design;
         char *design_file_extention_token = strstr(design_file,".design.svg");
         if(design_file_extention_token != NULL) *design_file_extention_token = 0;
-        asprintf(&save_dir_with_theme,"%s%s/",p.we_wordv[0],design_file);
+        asprintf(&save_dir_with_design,"%s%s/",p.we_wordv[0],design_file);
         asprintf(&config->save_path_and_prefix,"%s%s/%s_",p.we_wordv[0],design_file,design_file);
-        mkdir(save_dir_with_theme,0777);
+        printf("%s\n",save_dir_with_design);
+        printf("%s\n",config->save_path_and_prefix);
+        mkdir(save_dir_with_design,0777);
         if(design_file_extention_token != NULL) *design_file_extention_token = '.';
-        free(save_dir_with_theme);
+        free(save_dir_with_design);
     }
     wordfree(&p);
+
+    free(design_dir);
+    free(design_file);
+    free(theme_dir);
+    free(theme_file);
     free(save_dir);
 
     ///// [addons] /////
@@ -116,15 +131,15 @@ int get_recent_file_in_dir(char **file, char *directory, char *file_extention)
         while ((dir = readdir(d)) != NULL)
         {
             if(dir->d_type != DT_REG)continue;
-            char path[512]={0};
+            char file_path_buf[512]={0};
             struct stat file_stats = {0};
-            strncpy(path,directory,255);
-            strncat(path,dir->d_name,255);
-            stat(path,&file_stats);
-            if( strstr(path,file_extention) && file_stats.st_mtim.tv_sec > most_recent){
+            strncpy(file_path_buf,directory,255);
+            strncat(file_path_buf,dir->d_name,255);
+            stat(file_path_buf,&file_stats);
+            if( strstr(file_path_buf,file_extention) && file_stats.st_mtim.tv_sec > most_recent){
                 most_recent = file_stats.st_mtim.tv_sec;
                 if(*file != NULL) free(*file);
-                asprintf(file,"%s",path);
+                asprintf(file,"%s",basename(file_path_buf));
             }          
         }
         closedir(d);

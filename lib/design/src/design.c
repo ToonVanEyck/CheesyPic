@@ -119,6 +119,7 @@ void prepare_photo_list(xmlNode * a_node,photo_element_t *photo_list, int *index
 
 int load_design_from_file(design_t *design, const char *svg_design)
 {
+    LOG("loading design: %s\n",svg_design);
     memset(design,0,sizeof(design_t));
     doc = xmlReadFile(svg_design, NULL, 0);
     if(doc == NULL){
