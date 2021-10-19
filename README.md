@@ -94,7 +94,7 @@ sudo dtc -I dts -O dtb -o /boot/overlays/photobooth_button.dtbo misc/photobooth_
 Connect a normaly open button between GPIO_1 and ground.
 
 ## disable gvfs-gphoto:
-gvfs-gphoto automatically mounts cameras as a storage device on boot, this prevents cheesypic from using them. To disable gvfs:
+gvfs-gphoto automatically mounts cameras as a storage device on boot, this prevents cheesypic from using them. To disable gvfs run:
 ```bash
 sudo systemctl mask gvfs-daemon
 systemctl --user mask gvfs-daemon
@@ -131,7 +131,7 @@ xset -dpms
 # Allow quitting the X server with CTRL-ATL-Backspace
 setxkbmap -option terminate:ctrl_alt_bksp
 # Start Photobooth
-cheesypic /home/$USER/cheesypic_data
+cheesypic
 ```
 ### Start X on boot
 eddit ```.bash_profile```:
