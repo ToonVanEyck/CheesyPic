@@ -163,12 +163,21 @@ int init_render_thread(GLFWwindow **window, int windowless_mode, GLuint *texture
 
 
     primaryMonitor = glfwGetPrimaryMonitor();
-    *window = glfwCreateWindow(600, 400, "CheesyPic Photobooth by ToonVanEyck", windowless_mode?primaryMonitor:NULL, NULL);
+
+
+    const GLFWvidmode* video_mode = glfwGetVideoMode(primaryMonitor);
+    LOG("monitor: [%dx%d]\n",video_mode->width,video_mode->height);
+
+    *window = glfwCreateWindow(video_mode->width, video_mode->height, "CheesyPic Photobooth by ToonVanEyck", windowless_mode?primaryMonitor:NULL, NULL);
     if (!*window)
     {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
+
+    int width, height;
+    glfwGetWindowSize(*window, &width, &height);
+    LOG("window: [%dx%d]\n",width,height);
 
     glfwSetInputMode(*window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 

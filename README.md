@@ -167,4 +167,4 @@ commands | Discription
 'f'      | toggle fast mode
 'w'      | toggle windowed / fulscreen mode
 's'      | exit but wait 15s before stopping
-op
+./ch       
