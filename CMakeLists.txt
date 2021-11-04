@@ -66,7 +66,13 @@ include_directories(.
     ${B64_INCLUSDE_DIR}
     "${glfw_SOURCE_DIR}/deps")
 
-message(STATUS "glfw path: ${glfw_SOURCE_DIR}/deps" ...)
+# Add documentation
+find_package(Doxygen)
+if(Doxygen_FOUND)
+	add_subdirectory(docs)
+else()
+	message(STATUS "Doxygen not found, not building docs")
+endif()
 
 # add_subdirectory(app)
 add_subdirectory(lib/design)

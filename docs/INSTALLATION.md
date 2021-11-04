@@ -1,24 +1,7 @@
-# Cheeyspic PhotoBooth
-The cheesypic software transforms your rasberry-pi in a full fledged photobooth. The software will work with DSLR cameras and dye-sub photo printers to deliver a high quality photobooth experience.
+# Installation #        {#installation}
 
-## Features
-- Live view
-- Custom photo strip designs
-- Local storage of captured photos
-- Custom themes
-- Samba file server
-  
-## Supported Devices
-### Cameras
-The cameras is interfaced using libgphoto2. In theory the software will support any camera that libgphoto2 support.
+## Required packages ##
 
-[Supported Cameras](http://gphoto.org/proj/libgphoto2/support.php)
-### Printers
-The printer is interfaced using guttenprint and Solomon Peachy's selphy_print sofware.
-
-[Supported dye-sub printers](https://www.peachyphotos.com/blog/stories/dye-sublimation-photo-printers-and-linux/)
-
-## Required packages
 install with ```sudo apt install```
 - cmake
 - cups
@@ -38,8 +21,10 @@ install with ```sudo apt install```
 - libcups2-dev
 - doxygen
 
-## Installation
-### Cheesypic
+## Installation ##
+
+### Cheesypic ###
+
 ```bash
 cd cheesypic
 mkdir build
@@ -49,7 +34,8 @@ make
 sudo make install
 ```
 
-### Guttenprint / Selphy-print
+### Guttenprint / Selphy-print ###
+
 ```bash
 # Gain root
 sudo su -
@@ -85,7 +71,8 @@ exit
 ```
 Note: Some printers may require additional image processing library.
 
-## GPIO trigger
+## GPIO trigger ##
+
 The photobooth uses the 'c' key as a trigger to start the photobooth. A device-tree overlay can be added to configure gpio_1 as a keypad 'c' button.
 
 Compile and install the *photobooth_button.dts* on the pi using:
@@ -94,7 +81,8 @@ sudo dtc -I dts -O dtb -o /boot/overlays/photobooth_button.dtbo misc/photobooth_
 ```
 Connect a normaly open button between GPIO_1 and ground.
 
-## disable gvfs-gphoto:
+## disable gvfs-gphoto ##
+
 gvfs-gphoto automatically mounts cameras as a storage device on boot, this prevents cheesypic from using them. To disable gvfs run:
 ```bash
 sudo systemctl mask gvfs-daemon
@@ -105,7 +93,8 @@ Finally add the following line to ```/boot/config.txt```:
 dtoverlay=photobooth_button
 ```
 
-## Printer Setup
+## Printer Setup ##
+
 add the user to the lp group
 ```bash
 sudo adduser $USER lp
@@ -120,9 +109,13 @@ Verify the default printer:
 ```bash
 lpstat -d
 ```
-## Auto start
+
+## Auto start ##
+
 The configuration described in this topic allow you to automatically start the cheesypic software on boot without a desktop environement.
-### Openbox Configuration
+
+### Openbox Configuration ###
+
 edit ```/etc/xdg/openbox/autostart```:
 ```bash
 # Disable any form of screen saver / screen blanking / power management
@@ -134,38 +127,31 @@ setxkbmap -option terminate:ctrl_alt_bksp
 # Start Photobooth
 cheesypic
 ```
-### Start X on boot
+### Start X on boot ###
+
 edit ```.bash_profile```:
 ```bash
 [[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && startx -- -nocursor
 ```
-### Hide the boot terminal
+
+### Hide the boot terminal ###
+
 edit ```/boot/cmdline.txt``` and add:
 ```bash
 consoleblank=1 vt.global_cursor_default=0
 ```
-### Hide the boot rainbow splash
+
+### Hide the boot rainbow splash ###
+
 edit ```/boot/config.txt``` and add:
 ```bash
 disable_splash=1
 ```
-## Reducing boot time
+
+## Reducing boot time ##
+
 edit ```/boot/config.txt``` and add:
 ```bash
-dtoverlay=pi3-disable-bt
+dtoverlay=pi3-disable-bt # disables bluetooth
 boot_delay=0
 ```
-
-## Usage / Dev commands
-
-commands | Discription
----------|---------------------------------
-'c'      | start capture
-'a'      | toggle active / inactive logic
-'+'/'-'  | cycle states
-'l'      | toggle mirror liveview
-'m'      | toggle mirror reveal
-'f'      | toggle fast mode
-'w'      | toggle windowed / fulscreen mode
-'s'      | exit but wait 15s before stopping
-./ch       
