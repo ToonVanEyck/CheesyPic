@@ -209,10 +209,8 @@ int run_logic(shared_memory_t *shared_memory,config_t *config, session_t *sessio
                     struct tm ts;
                     time(&now);
                     ts = *localtime(&now);
-                    sprintf(capture_path,"%s",config->save_path_and_prefix);
                     strftime(&capture_path[strlen(capture_path)], sizeof(capture_path), "%y%m%d_%H%M%S", &ts);
                     sprintf(&capture_path[strlen(capture_path)],"_%d.jpg",session->photo_counter);
-                    printf("%s\n",capture_path);
                     if(config->save_photos){
                         writeJpg(capture_path,(const char *)shared_memory->capture_buffer.jpeg_buffer,shared_memory->capture_buffer.size);
                     }

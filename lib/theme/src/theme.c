@@ -143,6 +143,8 @@ int render_theme_layer(theme_t *theme, xmlNode *layer, overlay_t *overlay)
 
 int load_theme_from_file(theme_t *theme, const char *svg_theme)
 {
+    LOG("loading theme: %s\n",svg_theme);
+
     memset(theme,0,sizeof(theme_t));
     doc = xmlReadFile(svg_theme, NULL, 0);
     if(doc == NULL){

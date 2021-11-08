@@ -6,18 +6,18 @@ The CheesyPic photobooth software contains some configurable parameters. These c
 
 ### design_directory ###
 
-This option defines the path where the photoboot will look for a design file. Only files ending in ```.design.svg``` are considered.
+This option defines the path where the photoboot will look for a design file. Only files ending in ```.design.svg``` are considered. By default, the latest design in the design directory is used.
 
 ### force_design ###
 
-By default, the software uses the most recently modified design file in the design_directory. Setting this option forces the software to always use the defined design from the design_directory.
+Setting this option will force the defined design to be used instead of the most recent one.
 
 ## theme ##
 
 ### theme_directory ###
 
-This option defines the path where the photoboot will look for a theme file. Only files ending in ```.theme.svg``` are considered.
+This option defines the path where the photoboot will look for a theme file. Only files ending in ```.theme.svg``` are considered. By default, the latest theme in the theme directory is used.
 
 ### force_theme ###
 
-By default, the software uses the most recently modified theme file in the theme_directory. Setting this option forces the software to always use the defined theme from the theme_directory.
+Setting this optionwill force the defined theme to be used instead of the most recent one.

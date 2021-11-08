@@ -62,7 +62,7 @@ class Mode:
 
 class INA219:
     def __init__(self, i2c_bus=1, addr=0x40):
-        self.bus = smbus.SMBus(i2c_bus);
+        self.bus = smbus.SMBus(i2c_bus)
         self.addr = addr
 
         # Set chip to known config values to start
@@ -203,9 +203,11 @@ if __name__=='__main__':
     while pid:
         time.sleep(1)
         current = ina219.getCurrent_mA()
+        # print(current)
         if(current < -450):
             shutdown_counter += 1
             if(shutdown_counter > 3):
+                pass
                 try:
                     os.kill(pid,signal.SIGINT)
                     time.sleep(6)

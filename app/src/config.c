@@ -15,17 +15,13 @@ int read_config(config_t *config)
 
     ///// [design] /////
     char *design_dir = g_key_file_get_string(keyfile,"design","design_directory",NULL);
-    char *design_file;
-    int use_latest_design = g_key_file_get_boolean(keyfile,"design","use_latest_design",&error);
+    char *design_file = g_key_file_get_string(keyfile,"design","force_design",NULL);
     if(design_dir && wordexp(design_dir, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
         char *design_path;
-        if(use_latest_design){
+        if(design_file == NULL){
             get_recent_file_in_dir(&design_file,p.we_wordv[0],".design.svg");
-        }else{
-            design_file = g_key_file_get_string(keyfile,"design","default_design",NULL);
         }
-        if(design_file == NULL)
-        {
+        if(design_file == NULL){
             return 1;
         }
         asprintf(&design_path,"%s%s",p.we_wordv[0],design_file);
@@ -39,17 +35,13 @@ int read_config(config_t *config)
 
     ///// [theme] /////
     char *theme_dir = g_key_file_get_string(keyfile,"theme","theme_directory",NULL);
-    char *theme_file;
-    int use_latest_theme = g_key_file_get_boolean(keyfile,"theme","use_latest_theme",&error);
-    if(theme_dir && theme_file && wordexp(theme_dir, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
+    char *theme_file = g_key_file_get_string(keyfile,"theme","force_theme",NULL);
+    if(theme_dir && wordexp(theme_dir, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
         char *theme_path;
-        if(use_latest_theme){
+        if(theme_file == NULL){
             get_recent_file_in_dir(&theme_file,p.we_wordv[0],".theme.svg");
-        }else{
-            theme_file = g_key_file_get_string(keyfile,"theme","default_theme",NULL);
         }
-        if(theme_file == NULL)
-        {
+        if(theme_file == NULL){
             return 1;
         }
         asprintf(&theme_path,"%s%s",p.we_wordv[0],theme_file);
@@ -70,8 +62,6 @@ int read_config(config_t *config)
         if(design_file_extention_token != NULL) *design_file_extention_token = 0;
         asprintf(&save_dir_with_design,"%s%s/",p.we_wordv[0],design_file);
         asprintf(&config->save_path_and_prefix,"%s%s/%s_",p.we_wordv[0],design_file,design_file);
-        printf("%s\n",save_dir_with_design);
-        printf("%s\n",config->save_path_and_prefix);
         mkdir(save_dir_with_design,0777);
         if(design_file_extention_token != NULL) *design_file_extention_token = '.';
         free(save_dir_with_design);
