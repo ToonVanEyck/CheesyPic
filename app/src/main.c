@@ -35,13 +35,13 @@ int main(int argc, char *argv[])
     shared_memory->mirror_preview = config.mirror_preview;
     shared_memory->windowless_mode = config.windowless_mode;
     // Start addons
-    if(config.ups_addon_path != NULL){
-        LOG("Starting UPS addon: %s\n",config.ups_addon_path);
-            pid_t ups_addon_pid = fork();
-            if(!ups_addon_pid){
+    if(config.addon_script != NULL){
+        LOG("Starting addon: %s\n",config.addon_script);
+            pid_t addon_pid = fork();
+            if(!addon_pid){
                 char* pid_str;
                 asprintf(&pid_str,"%d",getppid());
-                char *args[] = {config.ups_addon_path,pid_str,NULL};
+                char *args[] = {config.addon_script,pid_str,NULL};
                 execv(args[0],args);
                 exit(EXIT_FAILURE);
             }

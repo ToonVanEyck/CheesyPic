@@ -75,12 +75,12 @@ int read_config(config_t *config)
     free(save_dir);
 
     ///// [addons] /////
-    char *ups_addon_path = g_key_file_get_string(keyfile,"addons","ups_addon_path",NULL);
-    if(ups_addon_path && wordexp(ups_addon_path, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
-        asprintf(&config->ups_addon_path,"%s",p.we_wordv[0]);
+    char *addon_script = g_key_file_get_string(keyfile,"addons","addon_script",NULL);
+    if(addon_script && wordexp(addon_script, &p, WRDE_UNDEF) == 0 && p.we_wordc == 1){
+        asprintf(&config->addon_script,"%s",p.we_wordv[0]);
     }
     wordfree(&p);
-    free(ups_addon_path);
+    free(addon_script);
 
     ///// [advanced] /////
     double countdown_time = g_key_file_get_double(keyfile,"advanced","countdown_time",&error) + 0.5e-9;
@@ -104,7 +104,7 @@ int read_config(config_t *config)
 void free_config(config_t *config){
     if(config->printer_driver_name != NULL)   free(config->printer_driver_name);
     if(config->save_path_and_prefix != NULL)  free(config->save_path_and_prefix);
-    if(config->ups_addon_path != NULL)        free(config->ups_addon_path);
+    if(config->addon_script != NULL)          free(config->addon_script);
     free_design(&config->design);
     free_theme(&config->theme);
 }
