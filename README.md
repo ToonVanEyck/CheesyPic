@@ -68,7 +68,8 @@ make -j4
 make install
 cd ..
 # Get the latest selphy_print code
-git clone git://git.shaftnet.org/selphy_print.git
+# git clone git://git.shaftnet.org/selphy_print.git
+git clone git@github.com:amianAA/selphy_print.git
 # Compile selphy_print
 cd selphy_print
 make -j4 
