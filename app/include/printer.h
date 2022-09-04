@@ -40,7 +40,9 @@ typedef struct{
 
 #define MAX_LEN 1024
 
+int get_printer_name(char **name);
 int get_printer_driver_name(char **name);
+void init_printer(const char *printer_name);
 int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info);
 int get_printer_stats(char *driver_name, printer_info_t *printer_info);
 int print_file(const char *file);

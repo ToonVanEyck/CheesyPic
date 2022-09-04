@@ -102,6 +102,7 @@ int read_config(config_t *config)
 }
 
 void free_config(config_t *config){
+    if(config->printer_name != NULL)          free(config->printer_name);
     if(config->printer_driver_name != NULL)   free(config->printer_driver_name);
     if(config->save_path_and_prefix != NULL)  free(config->save_path_and_prefix);
     if(config->addon_script != NULL)          free(config->addon_script);

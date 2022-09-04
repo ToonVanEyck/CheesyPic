@@ -51,11 +51,12 @@ int main(int argc, char *argv[])
     printer_info.nuf_of_decks = 2;
     printer_info.deck = malloc(printer_info.nuf_of_decks * sizeof(deck_info_t));
     memset(printer_info.deck,0,printer_info.nuf_of_decks * sizeof(deck_info_t));
-    if(get_printer_driver_name(&config.printer_driver_name)){
+    if(get_printer_name(&config.printer_name) || get_printer_driver_name(&config.printer_driver_name)){
         LOG("No default printer...\n");
         exit_code = EXIT_FAILURE; 
         goto cleanup_printer;
     }
+    init_printer(config.printer_name);
     is_printing_finished(config.printer_driver_name,&printer_info);
     if(!printer_info.connected){
         LOG("Error [%s] printer not connected.\n",config.printer_driver_name);

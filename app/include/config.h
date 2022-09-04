@@ -30,6 +30,7 @@ typedef struct{
     unsigned char mirror_preview;
     unsigned char printing_enabled;
     unsigned char windowless_mode;
+    char *printer_name;
     char *printer_driver_name;
     char *save_path_and_prefix;
     unsigned char save_photos;

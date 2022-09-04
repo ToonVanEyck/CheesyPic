@@ -1,5 +1,46 @@
 #include "printer.h"
 
+int get_printer_name(char **name)
+{
+    char buffer[1024];
+    FILE *lpstat = popen("lpstat -d", "r");
+    if(lpstat == NULL){
+        LOG("failed to read lpstat\n");
+        return 1;
+    }
+    fread (buffer, 1, 1024, lpstat);
+    pclose(lpstat);
+
+    regex_t regex;
+    regmatch_t match[2];
+    if(regcomp(&regex, "system default destination: (.*)", REG_EXTENDED)){
+        LOG("failed to compile regex\n");
+        return 1;
+    }
+    int ret = regexec(&regex, buffer, 2, match, 0);
+    if(!ret){
+        int len = match[1].rm_eo-match[1].rm_so;
+        *name = malloc(len+1);
+        if(*name == NULL){
+            regfree(&regex);
+            LOG("failed to allocate memory for printer name\n");
+            return 1;
+        }
+        (*name)[len]=0;
+        memcpy(*name,buffer+match[1].rm_so,len);
+    }else if(ret == REG_NOMATCH){
+        regfree(&regex);
+        return 1;
+    }else{
+        regerror(ret, &regex, buffer, sizeof(buffer));
+        LOG( "Regex match failed: %s\n", buffer);
+        return 1;
+    }
+
+    regfree(&regex);
+    return 0;
+}
+
 int get_printer_driver_name(char **name)
 {
     char buffer[1024];
@@ -41,10 +82,22 @@ int get_printer_driver_name(char **name)
     return 0;
 }
 
+void init_printer(const char *printer_name)
+{
+    // Clear all outstanding print jobs and enable the printer. (in case it was disabled by an error)
+    char buffer[1024]= {0};
+    sprintf(buffer,"cancel -a && cupsenable %s",printer_name);
+    FILE *init = popen(buffer, "r");
+    if (init == NULL){
+        LOG("failed to get printer stats\n");
+    }
+    pclose(init);
+}
+
 int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info)
 {
     char buffer[1024]= {0};
-    sprintf(buffer,"BACKEND_STATS_ONLY=2 BACKEND=%s ~/selphy_print/mitsu70x -s 2>&1",driver_name);
+    sprintf(buffer,"BACKEND_STATS_ONLY=2 BACKEND=%s ~/selphy_print/dyesub_backend -s 2>&1",driver_name);
     FILE *gp = popen(buffer, "r");
     if (gp == NULL){
         LOG("failed to get printer stats\n");
@@ -54,7 +107,7 @@ int get_printer_stats_from_json(char *driver_name, printer_info_t *printer_info)
     fread (buffer, 1, MAX_LEN, gp);
     if(feof(gp)){
         if(strstr(buffer,"Permission denied")){
-            LOG("Please make sure user has permission to execute (555 or 755) \"~/selphy_print/mitsu70x\"\n");
+            LOG("Please make sure user has permission to execute (555 or 755) \"~/selphy_print/dyesub_backend\"\n");
             return 1;
         }else if(strstr(buffer,"No matching printers found")){
             printer_info->connected = 0;

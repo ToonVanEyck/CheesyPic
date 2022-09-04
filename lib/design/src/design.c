@@ -202,7 +202,7 @@ int render_design(design_t *design, jpg_photo_t *jpg_photo)
     width = dim.width;
     height = dim.height;
 
-    design_surface = cairo_image_surface_create (CAIRO_FORMAT_RGB24, width, height);
+    design_surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
     design_ctx = cairo_create(design_surface);
 
     cairo_set_source_rgb(design_ctx, 1, 1, 1);
