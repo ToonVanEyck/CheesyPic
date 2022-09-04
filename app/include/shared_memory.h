@@ -57,7 +57,7 @@ typedef struct{
     unsigned long size;
     void *cameraFile;
     const char *gp_jpeg_data;
-    unsigned char jpeg_buffer[3000000];
+    unsigned char jpeg_buffer[4500000];
     unsigned int width;
     unsigned int height;
     unsigned char raw_data[CAPTURE_MAX_MP * 4000000];
