@@ -37,6 +37,7 @@ install with ```sudo apt install```
 - mesa-utils
 - libcups2-dev
 - doxygen
+- graphviz
 
 ## Installation
 ### Cheesypic
